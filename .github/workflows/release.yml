@@ -1,0 +1,247 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+  workflow_dispatch:
+    inputs:
+      bump_type:
+        description: 'Version bump type'
+        required: true
+        default: 'patch'
+        type: choice
+        options:
+          - patch
+          - minor
+          - major
+      pre_release:
+        description: 'Mark as pre-release'
+        required: false
+        default: false
+        type: boolean
+
+permissions:
+  contents: write
+
+jobs:
+  version-bump:
+    name: Version Bump
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    outputs:
+      tag: ${{ steps.bump.outputs.tag }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Configure git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Bump version
+        id: bump
+        run: |
+          # Fetch all tags and prune
+          git fetch --tags --prune --prune-tags
+
+          # Get latest version tag
+          latest_tag=$(git describe --tags --abbrev=0 2>/dev/null || echo "v0.0.0")
+          echo "Latest tag: ${latest_tag}"
+
+          # Parse version (remove 'v' prefix)
+          version=${latest_tag#v}
+          IFS='.' read -r major minor patch <<< "$version"
+          echo "Current version: ${major}.${minor}.${patch}"
+
+          # Increment based on bump_type
+          case "${{ inputs.bump_type }}" in
+            major)
+              ((major++))
+              minor=0
+              patch=0
+              ;;
+            minor)
+              ((minor++))
+              patch=0
+              ;;
+            patch)
+              ((patch++))
+              ;;
+          esac
+
+          new_tag="v${major}.${minor}.${patch}"
+          echo "New tag: ${new_tag}"
+
+          # Create and push tag
+          git tag -a "${new_tag}" -m "Release ${new_tag}"
+          git push origin "${new_tag}"
+
+          # Set output for next jobs
+          echo "tag=${new_tag}" >> $GITHUB_OUTPUT
+
+  build:
+    name: Build
+    needs: version-bump
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-latest
+            goos: linux
+            goarch: amd64
+          - os: ubuntu-latest
+            goos: linux
+            goarch: arm64
+          - os: macos-latest
+            goos: darwin
+            goarch: amd64
+          - os: macos-13
+            goos: darwin
+            goarch: arm64
+          - os: windows-latest
+            goos: windows
+            goarch: amd64
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.25'
+          cache: true
+
+      - name: Download dependencies
+        run: go mod download
+
+      - name: Set build variables
+        shell: bash
+        run: |
+          # Determine version
+          if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+            VERSION=${{ needs.version-bump.outputs.tag }}
+          else
+            VERSION=${GITHUB_REF_NAME}
+          fi
+
+          GIT_COMMIT=${GITHUB_SHA}
+          BUILD_DATE=$(date -u '+%Y-%m-%d_%H:%M:%S')
+          GO_VERSION=$(go version | cut -d' ' -f3)
+
+          echo "VERSION=${VERSION}" >> $GITHUB_ENV
+          echo "GIT_COMMIT=${GIT_COMMIT:0:7}" >> $GITHUB_ENV
+          echo "BUILD_DATE=${BUILD_DATE}" >> $GITHUB_ENV
+          echo "GO_VERSION=${GO_VERSION}" >> $GITHUB_ENV
+          echo "GOOS=${{ matrix.goos }}" >> $GITHUB_ENV
+          echo "GOARCH=${{ matrix.goarch }}" >> $GITHUB_ENV
+
+          # Determine binary extension
+          BINARY_EXT=""
+          if [ "${{ matrix.goos }}" == "windows" ]; then
+            BINARY_EXT=".exe"
+          fi
+          echo "BINARY_EXT=${BINARY_EXT}" >> $GITHUB_ENV
+
+          # Determine output filename
+          BINARY_NAME="claude-hud-${{ matrix.goos }}-${{ matrix.goarch }}${BINARY_EXT}"
+          echo "BINARY_NAME=${BINARY_NAME}" >> $GITHUB_ENV
+
+      - name: Run tests
+        run: go test -v -race -cover ./...
+
+      - name: Build binary
+        shell: bash
+        run: |
+          LDFLAGS="-ldflags \
+            -X github.com/ll931217/claude-hud-enhanced/internal/version.Version=${VERSION} \
+            -X github.com/ll931217/claude-hud-enhanced/internal/version.GitCommit=${GIT_COMMIT} \
+            -X github.com/ll931217/claude-hud-enhanced/internal/version.BuildDate=${BUILD_DATE} \
+            -X github.com/ll931217/claude-hud-enhanced/internal/version.GoVersion=${GO_VERSION}"
+
+          go build -trimpath ${LDFLAGS} -o "${BINARY_NAME}" ./cmd/claude-hud
+
+      - name: Create archive
+        shell: bash
+        run: |
+          if [ "${{ matrix.goos }}" == "windows" ]; then
+            ARCHIVE="claude-hud-${VERSION}-${{ matrix.goos }}-${{ matrix.goarch }}.zip"
+            zip -q "${ARCHIVE}" "${BINARY_NAME}"
+          else
+            ARCHIVE="claude-hud-${VERSION}-${{ matrix.goos }}-${{ matrix.goarch }}.tar.gz"
+            tar -czf "${ARCHIVE}" "${BINARY_NAME}"
+          fi
+
+          echo "ARCHIVE=${ARCHIVE}" >> $GITHUB_ENV
+
+      - name: Upload archive
+        uses: actions/upload-artifact@v4
+        with:
+          name: archive-${{ matrix.goos }}-${{ matrix.goarch }}
+          path: ${{ env.ARCHIVE }}
+
+  create-release:
+    name: Create Release
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Determine version
+        id: version
+        run: |
+          if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+            VERSION=${{ needs.version-bump.outputs.tag }}
+          else
+            VERSION=${GITHUB_REF_NAME}
+          fi
+          echo "version=${VERSION}" >> $GITHUB_OUTPUT
+          echo "VERSION=${VERSION}" >> $GITHUB_ENV
+
+      - name: Download all archives
+        uses: actions/download-artifact@v4
+        with:
+          pattern: archive-*
+          path: archives
+          merge-multiple: true
+
+      - name: Generate release notes
+        id: release_notes
+        run: |
+          # Get previous tag
+          PREV_TAG=$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || echo "")
+
+          # Generate release notes
+          if [ -n "${PREV_TAG}" ]; then
+            NOTES="## Changes since ${PREV_TAG}\n\n"
+            NOTES=$(git log ${PREV_TAG}..HEAD --pretty=format:"- %s" | sed 's/^/  /')
+          else
+            NOTES="## Release ${VERSION}\n\n"
+            NOTES="Initial release of Claude HUD Enhanced"
+          fi
+
+          # Save to file for multiline support
+          echo "${NOTES}" > release_notes.txt
+
+      - name: Create GitHub Release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PRE_RELEASE: ${{ github.event_name == 'workflow_dispatch' && inputs.pre_release || 'false' }}
+        run: |
+          FLAGS=()
+          if [ "${PRE_RELEASE}" = "true" ]; then
+            FLAGS+=("--prerelease")
+          fi
+
+          gh release create "${VERSION}" \
+            archives/* \
+            --title "${VERSION}" \
+            --notes-file release_notes.txt \
+            "${FLAGS[@]}"
