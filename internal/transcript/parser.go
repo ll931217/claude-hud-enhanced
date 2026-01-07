@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"strings"
 	"sync"
 	"time"
 
@@ -28,6 +29,7 @@ type Parser struct {
 	sessionEnd       time.Time
 	totalInputTokens int
 	totalOutputTokens int
+	todos            map[string]*TodoInfo
 }
 
 // ParserState tracks the current state of the parser
@@ -44,6 +46,7 @@ func NewParser(transcriptPath string) *Parser {
 		latestEvents:   make(map[EventType]*Event),
 		toolActivity:   make(map[string]*ToolInfo),
 		agentActivity:  make(map[string]*AgentInfo),
+		todos:          make(map[string]*TodoInfo),
 		state:          &ParserState{},
 	}
 }
@@ -242,6 +245,18 @@ func (p *Parser) parseLine(line []byte) error {
 		event.Timestamp = task.Timestamp
 		event.TaskStatus = &task.TaskStatus
 
+	case EventTypeTodo:
+		var todo struct {
+			Type      string    `json:"type"`
+			Timestamp string    `json:"timestamp,omitempty"`
+			Todo      TodoInfo `json:"todo"`
+		}
+		if err := json.Unmarshal(line, &todo); err != nil {
+			return err
+		}
+		event.Timestamp = todo.Timestamp
+		event.Todo = &todo.Todo
+
 	default:
 		// For unknown types, just store the raw data
 		var base struct {
@@ -257,6 +272,12 @@ func (p *Parser) parseLine(line []byte) error {
 	// Update latest event for this type
 	p.mu.Lock()
 	p.latestEvents[eventType] = &event
+
+	// Track todos
+	if event.Todo != nil && event.Todo.ID != "" {
+		p.todos[event.Todo.ID] = event.Todo
+	}
+
 	p.mu.Unlock()
 
 	return nil
@@ -271,6 +292,7 @@ func (p *Parser) resetState() {
 	p.latestEvents = make(map[EventType]*Event)
 	p.toolActivity = make(map[string]*ToolInfo)
 	p.agentActivity = make(map[string]*AgentInfo)
+	p.todos = make(map[string]*TodoInfo)
 	// Keep session start if we already found it
 }
 
@@ -416,4 +438,113 @@ func (p *Parser) ParseFromReader(ctx context.Context, r io.Reader) error {
 		p.state.LastParseTime = time.Now()
 		return nil
 	})
+}
+
+// GetTodos returns all tracked todos
+func (p *Parser) GetTodos() map[string]*TodoInfo {
+	p.mu.RLock()
+	defer p.mu.RUnlock()
+
+	result := make(map[string]*TodoInfo)
+	for k, v := range p.todos {
+		result[k] = v
+	}
+	return result
+}
+
+// GetTodoCount returns the total and completed todo counts
+func (p *Parser) GetTodoCount() (total, completed int) {
+	p.mu.RLock()
+	defer p.mu.RUnlock()
+
+	total = len(p.todos)
+	for _, todo := range p.todos {
+		if todo.Status == "completed" {
+			completed++
+		}
+	}
+	return total, completed
+}
+
+// GetCurrentTodo returns the current in-progress todo
+func (p *Parser) GetCurrentTodo() *TodoInfo {
+	p.mu.RLock()
+	defer p.mu.RUnlock()
+
+	for _, todo := range p.todos {
+		if todo.Status == "in_progress" {
+			return todo
+		}
+	}
+	return nil
+}
+
+// CalculateCost estimates the token cost based on model pricing
+func (p *Parser) CalculateCost() float64 {
+	p.mu.RLock()
+	defer p.mu.RUnlock()
+
+	// Pricing per million tokens (USD)
+	// These are approximate prices for Claude models
+	const (
+		opusInputPrice  = 15.0
+		opusOutputPrice = 75.0
+		sonnetInputPrice  = 3.0
+		sonnetOutputPrice = 15.0
+		haikuInputPrice  = 0.25
+		haikuOutputPrice = 1.25
+	)
+
+	// Get model from latest assistant message
+	inputPrice, outputPrice := opusInputPrice, opusOutputPrice // default to Opus
+	if event := p.latestEvents[EventTypeAssistantMessage]; event != nil && event.Message != nil {
+		model := event.Message.Model
+		switch {
+		case strings.Contains(model, "opus"):
+			inputPrice, outputPrice = opusInputPrice, opusOutputPrice
+		case strings.Contains(model, "sonnet"):
+			inputPrice, outputPrice = sonnetInputPrice, sonnetOutputPrice
+		case strings.Contains(model, "haiku"):
+			inputPrice, outputPrice = haikuInputPrice, haikuOutputPrice
+		}
+	}
+
+	inputCost := (float64(p.totalInputTokens) / 1_000_000) * inputPrice
+	outputCost := (float64(p.totalOutputTokens) / 1_000_000) * outputPrice
+
+	return inputCost + outputCost
+}
+
+// GetDuration returns the formatted session duration
+func (p *Parser) GetDuration() string {
+	p.mu.RLock()
+	defer p.mu.RUnlock()
+
+	if p.sessionStart.IsZero() {
+		return "0s"
+	}
+
+	duration := time.Since(p.sessionStart)
+
+	// Format duration in human-readable format
+	switch {
+	case duration < time.Minute:
+		return duration.String()
+	case duration < time.Hour:
+		return fmt.Sprintf("%dm", int(duration.Minutes()))
+	case duration < 24*time.Hour:
+		hours := int(duration.Hours())
+		mins := int(duration.Minutes()) % 60
+		if mins > 0 {
+			return fmt.Sprintf("%dh%dm", hours, mins)
+		}
+		return fmt.Sprintf("%dh", hours)
+	default:
+		days := int(duration.Hours() / 24)
+		hours := int(duration.Hours()) % 24
+		if hours > 0 {
+			return fmt.Sprintf("%dd%dh", days, hours)
+		}
+		return fmt.Sprintf("%dd", days)
+	}
 }

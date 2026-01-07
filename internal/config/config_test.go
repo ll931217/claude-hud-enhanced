@@ -48,19 +48,19 @@ func TestDefaultConfig(t *testing.T) {
 		})
 	}
 
-	// Check colors
+	// Check colors - Catppuccin Mocha theme
 	colorTests := []struct {
 		field   string
 		value   string
 		checkFn func() string
 	}{
-		{"Primary", "blue", func() string { return config.Colors.Primary }},
-		{"Secondary", "green", func() string { return config.Colors.Secondary }},
-		{"Error", "red", func() string { return config.Colors.Error }},
-		{"Warning", "yellow", func() string { return config.Colors.Warning }},
-		{"Info", "cyan", func() string { return config.Colors.Info }},
-		{"Success", "green", func() string { return config.Colors.Success }},
-		{"Muted", "gray", func() string { return config.Colors.Muted }},
+		{"Primary", "#89dceb", func() string { return config.Colors.Primary }},
+		{"Secondary", "#cba6f7", func() string { return config.Colors.Secondary }},
+		{"Error", "#f38ba8", func() string { return config.Colors.Error }},
+		{"Warning", "#fab387", func() string { return config.Colors.Warning }},
+		{"Info", "#b4befe", func() string { return config.Colors.Info }},
+		{"Success", "#a6e3a1", func() string { return config.Colors.Success }},
+		{"Muted", "#6c7086", func() string { return config.Colors.Muted }},
 	}
 
 	for _, tt := range colorTests {
@@ -215,8 +215,8 @@ refresh_interval_ms: 1000
 		t.Error("Expected session section to use default enabled=true")
 	}
 
-	if config.Colors.Primary != "blue" {
-		t.Errorf("Expected default primary color 'blue', got '%s'", config.Colors.Primary)
+	if config.Colors.Primary != "#89dceb" {
+		t.Errorf("Expected default primary color '#89dceb', got '%s'", config.Colors.Primary)
 	}
 }
 
@@ -256,12 +256,12 @@ func TestValidate_ColorDefaults(t *testing.T) {
 
 	config.validate()
 
-	if config.Colors.Primary != "blue" {
-		t.Errorf("Expected default primary color 'blue', got '%s'", config.Colors.Primary)
+	if config.Colors.Primary != "#89dceb" {
+		t.Errorf("Expected default primary color '#89dceb', got '%s'", config.Colors.Primary)
 	}
 
-	if config.Colors.Error != "red" {
-		t.Errorf("Expected default error color 'red', got '%s'", config.Colors.Error)
+	if config.Colors.Error != "#f38ba8" {
+		t.Errorf("Expected default error color '#f38ba8', got '%s'", config.Colors.Error)
 	}
 }
 

@@ -7,6 +7,7 @@ import (
 	"sort"
 	"time"
 
+	"github.com/ll931217/claude-hud-enhanced/internal/theme"
 	"gopkg.in/yaml.v3"
 )
 
@@ -45,6 +46,9 @@ type ColorsConfig struct {
 
 // defaultConfig returns the embedded default configuration
 func defaultConfig() *Config {
+	// Use Catppuccin Mocha theme colors
+	ct := theme.CatppuccinMocha()
+
 	return &Config{
 		Sections: SectionsConfig{
 			Session: SectionConfig{
@@ -65,13 +69,13 @@ func defaultConfig() *Config {
 			},
 		},
 		Colors: ColorsConfig{
-			Primary:   "blue",
-			Secondary: "green",
-			Error:     "red",
-			Warning:   "yellow",
-			Info:      "cyan",
-			Success:   "green",
-			Muted:     "gray",
+			Primary:   ct.Primary,
+			Secondary: ct.Secondary,
+			Error:     ct.Error,
+			Warning:   ct.Warning,
+			Info:      ct.Info,
+			Success:   ct.Success,
+			Muted:     ct.Muted,
 		},
 		RefreshIntervalMs: 300,
 		Debug:            false,
@@ -156,6 +160,9 @@ func getConfigPath() (string, error) {
 
 // validate ensures the configuration is valid and applies sensible defaults
 func (c *Config) validate() {
+	// Get Catppuccin Mocha theme for defaults
+	ct := theme.CatppuccinMocha()
+
 	// Validate refresh interval (clamp between 100ms and 5000ms)
 	if c.RefreshIntervalMs < 100 {
 		c.RefreshIntervalMs = 100
@@ -164,27 +171,27 @@ func (c *Config) validate() {
 		c.RefreshIntervalMs = 5000
 	}
 
-	// Validate colors - set defaults if empty
+	// Validate colors - set defaults to Catppuccin Mocha if empty
 	if c.Colors.Primary == "" {
-		c.Colors.Primary = "blue"
+		c.Colors.Primary = ct.Primary
 	}
 	if c.Colors.Secondary == "" {
-		c.Colors.Secondary = "green"
+		c.Colors.Secondary = ct.Secondary
 	}
 	if c.Colors.Error == "" {
-		c.Colors.Error = "red"
+		c.Colors.Error = ct.Error
 	}
 	if c.Colors.Warning == "" {
-		c.Colors.Warning = "yellow"
+		c.Colors.Warning = ct.Warning
 	}
 	if c.Colors.Info == "" {
-		c.Colors.Info = "cyan"
+		c.Colors.Info = ct.Info
 	}
 	if c.Colors.Success == "" {
-		c.Colors.Success = "green"
+		c.Colors.Success = ct.Success
 	}
 	if c.Colors.Muted == "" {
-		c.Colors.Muted = "gray"
+		c.Colors.Muted = ct.Muted
 	}
 
 	// Ensure all section orders are unique and positive

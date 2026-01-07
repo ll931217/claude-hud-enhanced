@@ -15,6 +15,7 @@ const (
 	EventTypeAgentRun       EventType = "agent_run"
 	EventTypeAgentMessage   EventType = "agent_message"
 	EventTypeTaskStatus     EventType = "task_status"
+	EventTypeTodo            EventType = "todo"
 	EventTypeUnknown        EventType = "unknown"
 )
 
@@ -38,6 +39,7 @@ type Event struct {
 
 	// Task/TODO fields
 	TaskStatus *TaskStatusInfo `json:"task_status,omitempty"`
+	Todo        *TodoInfo      `json:"todo,omitempty"`
 
 	// Context window (from assistant messages)
 	ContextWindow *ContextWindow `json:"context_window,omitempty"`
@@ -94,6 +96,14 @@ type TaskStatusInfo struct {
 	Content    string `json:"content,omitempty"`
 }
 
+// TodoInfo contains todo item information
+type TodoInfo struct {
+	ID       string `json:"id,omitempty"`
+	Status   string `json:"status,omitempty"` // pending, in_progress, completed
+	Content  string `json:"content,omitempty"`
+	Priority int    `json:"priority,omitempty"`
+}
+
 // ContextWindow contains context usage information
 type ContextWindow struct {
 	CurrentUsage UsageInfo `json:"current_usage"`
@@ -126,7 +136,7 @@ func ParseEventType(raw []byte) EventType {
 	switch EventType(base.Type) {
 	case EventTypeError, EventTypeWarning, EventTypeUserMessage,
 		EventTypeAssistantMessage, EventTypeToolUse, EventTypeToolResult,
-		EventTypeAgentRun, EventTypeAgentMessage, EventTypeTaskStatus:
+		EventTypeAgentRun, EventTypeAgentMessage, EventTypeTaskStatus, EventTypeTodo:
 		return EventType(base.Type)
 	default:
 		// Try to detect from other fields
@@ -136,6 +146,7 @@ func ParseEventType(raw []byte) EventType {
 			ToolResult  map[string]interface{} `json:"tool_result"`
 			AgentRun    map[string]interface{} `json:"agent_run"`
 			TaskStatus  map[string]interface{} `json:"task_status"`
+			Todo        map[string]interface{} `json:"todo"`
 		}
 
 		if err := json.Unmarshal(raw, &detect); err == nil {
@@ -158,6 +169,9 @@ func ParseEventType(raw []byte) EventType {
 			}
 			if detect.TaskStatus != nil {
 				return EventTypeTaskStatus
+			}
+			if detect.Todo != nil {
+				return EventTypeTodo
 			}
 		}
 

@@ -73,6 +73,16 @@ func (s *SessionSection) Render() string {
 		parts = append(parts, agents)
 	}
 
+	// Add todo progress if available
+	if todos := s.getTodoProgress(); todos != "" {
+		parts = append(parts, todos)
+	}
+
+	// Add cost if available
+	if cost := s.getCost(); cost != "" {
+		parts = append(parts, cost)
+	}
+
 	if len(parts) == 0 {
 		return "[Session: waiting for data]"
 	}
@@ -137,28 +147,7 @@ func (s *SessionSection) progressBar(percentage, width int) string {
 
 // getDuration returns the session duration
 func (s *SessionSection) getDuration() string {
-	start := s.parser.GetSessionStart()
-	if start.IsZero() {
-		return ""
-	}
-
-	duration := time.Since(start)
-	if duration < 0 {
-		return ""
-	}
-
-	// Format duration
-	hours := int(duration.Hours())
-	minutes := int(duration.Minutes()) % 60
-	seconds := int(duration.Seconds()) % 60
-
-	if hours > 0 {
-		return fmt.Sprintf("%dh%dm", hours, minutes)
-	} else if minutes > 0 {
-		return fmt.Sprintf("%dm%ds", minutes, seconds)
-	} else {
-		return fmt.Sprintf("%ds", seconds)
-	}
+	return s.parser.GetDuration()
 }
 
 // getToolActivity returns active and completed tool usage
@@ -219,4 +208,48 @@ func getTranscriptPath() string {
 	// Check environment variable
 	// For now, return empty - will be set by Claude Code
 	return ""
+}
+
+// getTodoProgress returns todo progress information
+func (s *SessionSection) getTodoProgress() string {
+	total, completed := s.parser.GetTodoCount()
+	if total == 0 {
+		return ""
+	}
+
+	// Check if there's a current in-progress todo
+	current := s.parser.GetCurrentTodo()
+
+	if current != nil {
+		// Show current in-progress task
+		content := current.Content
+		if len(content) > 30 {
+			content = content[:27] + "..."
+		}
+		return fmt.Sprintf("◐ %s", content)
+	}
+
+	// All todos completed
+	if completed == total {
+		return fmt.Sprintf("✓ All todos complete (%d/%d)", total, completed)
+	}
+
+	// Show progress
+	return fmt.Sprintf("✓ %d/%d", completed, total)
+}
+
+// getCost returns the estimated session cost
+func (s *SessionSection) getCost() string {
+	cost := s.parser.CalculateCost()
+	if cost == 0 {
+		return ""
+	}
+
+	// Format cost
+	if cost < 0.01 {
+		return fmt.Sprintf("$%.4f", cost)
+	} else if cost < 1 {
+		return fmt.Sprintf("$%.2f", cost)
+	}
+	return fmt.Sprintf("$%.2f", cost)
 }
