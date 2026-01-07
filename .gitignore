@@ -10,7 +10,6 @@ dist/
 release/
 
 # Go
-go.sum
 *.test
 *.out
 coverage.txt
