@@ -30,7 +30,8 @@ help:
 	@echo "  make release      - Build release for current platform"
 	@echo "  make release-all  - Build releases for all platforms"
 	@echo "  make clean        - Clean build artifacts"
-	@echo "  make test         - Run tests"
+	@echo "  make test         - Run tests (with race detection)"
+	@echo "  make test-ci      - Run fast CI tests"
 	@echo "  make benchmark    - Run benchmarks"
 	@echo "  make run          - Run the application"
 	@echo "  make fmt          - Format code"
@@ -97,6 +98,10 @@ clean:
 test:
 	@echo "Running tests..."
 	$(GO) test -v -race -cover ./...
+
+test-ci:
+	@echo "Running CI tests..."
+	$(GO) test -short -timeout 5m ./...
 
 benchmark:
 	@echo "Running benchmarks..."
