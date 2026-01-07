@@ -157,9 +157,7 @@ jobs:
       - name: Build binary
         shell: bash
         run: |
-          LDFLAGS="-ldflags -X github.com/ll931217/claude-hud-enhanced/internal/version.Version=${VERSION} -X github.com/ll931217/claude-hud-enhanced/internal/version.GitCommit=${GIT_COMMIT} -X github.com/ll931217/claude-hud-enhanced/internal/version.BuildDate=${BUILD_DATE} -X github.com/ll931217/claude-hud-enhanced/internal/version.GoVersion=${GO_VERSION}"
-
-          go build -trimpath ${LDFLAGS} -o "${BINARY_NAME}" ./cmd/claude-hud
+          go build -trimpath -ldflags "-X github.com/ll931217/claude-hud-enhanced/internal/version.Version=${VERSION} -X github.com/ll931217/claude-hud-enhanced/internal/version.GitCommit=${GIT_COMMIT} -X github.com/ll931217/claude-hud-enhanced/internal/version.BuildDate=${BUILD_DATE} -X github.com/ll931217/claude-hud-enhanced/internal/version.GoVersion=${GO_VERSION}" -o "${BINARY_NAME}" ./cmd/claude-hud
 
       - name: Create archive
         shell: bash
