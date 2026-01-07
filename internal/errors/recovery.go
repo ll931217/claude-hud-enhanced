@@ -194,7 +194,12 @@ func WithRecoveryAndError(op string, fn func() error) (err error) {
 
 // WithRecoveryAndResult wraps a function with panic recovery and returns result and error.
 func WithRecoveryAndResult[T any](op string, fn func() (T, error)) (result T, err error) {
-	defer RecoverPanic(op)
+	defer func() {
+		if r := recover(); r != nil {
+			err = PanicError(op, r)
+			LogErrorWithLevel(err)
+		}
+	}()
 	return fn()
 }
 

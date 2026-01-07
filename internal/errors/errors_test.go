@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"runtime"
 	"testing"
+	"time"
 )
 
 // TestHUDError tests the HUDError type
@@ -625,6 +626,10 @@ func TestSetDebugMode(t *testing.T) {
 
 // TestInfiniteRecovery tests the InfiniteRecovery function
 func TestInfiniteRecovery(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping infinite recovery test in short mode")
+	}
+
 	callCount := 0
 	maxCalls := 3
 
@@ -643,6 +648,8 @@ func TestInfiniteRecovery(t *testing.T) {
 		if callCount != maxCalls {
 			t.Errorf("InfiniteRecovery() call count = %v, want %v", callCount, maxCalls)
 		}
+	case <-time.After(5 * time.Second):
+		t.Fatal("TestInfiniteRecovery timed out after 5 seconds")
 	}
 }
 
@@ -767,6 +774,10 @@ func TestFallback(t *testing.T) {
 
 // TestSafeGo tests the SafeGo function
 func TestSafeGo(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping SafeGo test in short mode")
+	}
+
 	done := make(chan bool)
 	SafeGo("test", func() {
 		panic("test panic in goroutine")
@@ -777,7 +788,7 @@ func TestSafeGo(t *testing.T) {
 	select {
 	case <-done:
 		// Success - goroutine completed
-	case <-make(chan struct{}):
+	case <-time.After(5 * time.Second):
 		// Timeout
 		t.Error("SafeGo() goroutine did not complete")
 	}

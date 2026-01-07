@@ -20,15 +20,16 @@ func SafeRender(fn func() string) string {
 
 // SafeRenderWithDefault executes a render function and catches any panics.
 // If the function panics or returns an empty string, it returns the default value.
-func SafeRenderWithDefault(fn func() string, defaultVal string) string {
+func SafeRenderWithDefault(fn func() string, defaultVal string) (result string) {
 	defer func() {
 		if r := recover(); r != nil {
 			err := PanicError("render", r)
 			LogErrorWithLevel(err)
+			result = defaultVal
 		}
 	}()
 
-	result := fn()
+	result = fn()
 	if result == "" {
 		return defaultVal
 	}
