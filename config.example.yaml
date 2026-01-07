@@ -1,0 +1,43 @@
+# Claude HUD Enhanced Configuration Example
+#
+# Copy this file to ~/.config/claude-hud/config.yaml and customize as needed.
+# If the config file is missing or invalid, default values will be used.
+
+# Section Configuration
+# Each section can be enabled/disabled and ordered independently
+sections:
+  session:
+    enabled: true
+    order: 1
+
+  beads:
+    enabled: true
+    order: 2
+
+  status:
+    enabled: true
+    order: 3
+
+  workspace:
+    enabled: true
+    order: 4
+
+# Color Customization
+# Colors can be specified as named colors (blue, red, green, etc.)
+# or as hex codes (#89dceb, #a6e3a1, etc.)
+colors:
+  primary: "blue"      # Main color for important elements
+  secondary: "green"   # Secondary color for less prominent elements
+  error: "red"         # Error messages and states
+  warning: "yellow"    # Warning messages and states
+  info: "cyan"         # Informational messages
+  success: "green"     # Success messages and states
+  muted: "gray"        # Muted/de-emphasized text
+
+# Refresh interval in milliseconds
+# Controls how often the HUD updates (min: 100ms, max: 5000ms)
+refresh_interval_ms: 300
+
+# Debug mode
+# Enables verbose logging for troubleshooting
+debug: false

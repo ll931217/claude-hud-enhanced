@@ -2,12 +2,12 @@
 prd:
   version: v1
   feature_name: claude-hud-enhanced
-  status: approved
+  status: implementing
 git:
   branch: master
   branch_type: main
   created_at_commit: f05d62cf257e01e661e75d53bd202ba0c767067e
-  updated_at_commit: f05d62cf257e01e661e75d53bd202ba0c767067e
+  updated_at_commit: 5ed1fd9c4d3e3c508c43ab3d585c8533c265e9f9
 worktree:
   is_worktree: false
   name: master
@@ -15,9 +15,13 @@ worktree:
   repo_root: /home/ll931217/GitHub/dotfiles
 metadata:
   created_at: 2026-01-06T13:14:46Z
-  updated_at: 2026-01-06T13:14:46Z
+  updated_at: 2026-01-06T22:30:00Z
   created_by: Liang-Shih Lin <liangshihlin@gmail.com>
   filename: prd-claude-hud-enhanced-v1.md
+  changelog:
+    - version: v1
+      date: 2026-01-06T22:30:00Z
+      changes: "Implementation started"
 beads:
   related_issues: [dotfiles-66r.1,dotfiles-66r.2,dotfiles-66r.3,dotfiles-66r.4,dotfiles-66r.5,dotfiles-tye.1,dotfiles-tye.2,dotfiles-tye.3,dotfiles-tye.4,dotfiles-tye.5,dotfiles-tye.6,dotfiles-yzr.1,dotfiles-yzr.2,dotfiles-yzr.3,dotfiles-yzr.4,dotfiles-yzr.5,dotfiles-on4.1,dotfiles-on4.2,dotfiles-on4.3,dotfiles-on4.4,dotfiles-on4.5,dotfiles-on4.6,dotfiles-0zn.1,dotfiles-0zn.2,dotfiles-0zn.3,dotfiles-0zn.4,dotfiles-0zn.5,dotfiles-0zn.6,dotfiles-zov.1,dotfiles-zov.2,dotfiles-zov.3,dotfiles-zov.4,dotfiles-zov.5,dotfiles-zov.6]
   related_epics: [dotfiles-66r,dotfiles-tye,dotfiles-yzr,dotfiles-on4,dotfiles-0zn,dotfiles-zov]

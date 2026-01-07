@@ -1,0 +1,36 @@
+# Claude HUD Enhanced Configuration
+# This file demonstrates the configuration options with error handling
+
+# Debug mode enables verbose logging for troubleshooting
+debug: true
+
+# Refresh interval in milliseconds (100-5000)
+refresh_interval_ms: 300
+
+# Section configuration
+sections:
+  session:
+    enabled: true
+    order: 1
+
+  beads:
+    enabled: true
+    order: 2
+
+  status:
+    enabled: true
+    order: 3
+
+  workspace:
+    enabled: true
+    order: 4
+
+# Color customization
+colors:
+  primary:   "blue"
+  secondary: "green"
+  error:     "red"
+  warning:   "yellow"
+  info:      "cyan"
+  success:   "green"
+  muted:     "gray"
