@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"flag"
 	"fmt"
 	"os"
 	"os/signal"
@@ -11,10 +12,36 @@ import (
 	"github.com/ll931217/claude-hud-enhanced/internal/errors"
 	"github.com/ll931217/claude-hud-enhanced/internal/registry"
 	"github.com/ll931217/claude-hud-enhanced/internal/statusline"
+	"github.com/ll931217/claude-hud-enhanced/internal/version"
 	_ "github.com/ll931217/claude-hud-enhanced/internal/sections" // Register sections via init()
 )
 
+var (
+	showVersion = flag.Bool("version", false, "Show version information")
+	showBuild   = flag.Bool("build-info", false, "Show detailed build information")
+)
+
 func main() {
+	// Parse flags
+	flag.Parse()
+
+	// Handle version flag
+	if *showVersion {
+		fmt.Println(version.FullVersionInfo())
+		os.Exit(0)
+	}
+
+	// Handle build info flag
+	if *showBuild {
+		info := version.BuildInfo()
+		fmt.Println("Claude HUD Enhanced Build Information")
+		fmt.Println("===================================")
+		fmt.Printf("Version:   %s\n", info["version"])
+		fmt.Printf("Commit:    %s\n", info["commit"])
+		fmt.Printf("Built At:  %s\n", info["built_at"])
+		fmt.Printf("Go Version: %s\n", info["go_version"])
+		os.Exit(0)
+	}
 	// Set up panic recovery at the top level
 	defer errors.MainRecovery()
 
