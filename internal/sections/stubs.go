@@ -5,28 +5,6 @@ import (
 	"github.com/ll931217/claude-hud-enhanced/internal/registry"
 )
 
-// SessionSection displays session/worktrunk information
-type SessionSection struct {
-	*BaseSection
-}
-
-// NewSessionSection creates a new session section (factory function for registry)
-func NewSessionSection(cfg interface{}) (registry.Section, error) {
-	appConfig, ok := cfg.(*config.Config)
-	if !ok {
-		appConfig = config.DefaultConfig()
-	}
-
-	return &SessionSection{
-		BaseSection: NewBaseSection("session", appConfig),
-	}, nil
-}
-
-// Render returns the session section output
-func (s *SessionSection) Render() string {
-	return "[Session: worktrunk info]"
-}
-
 // BeadsSection displays beads issue tracking information
 type BeadsSection struct {
 	*BaseSection
