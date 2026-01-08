@@ -10,6 +10,7 @@ import (
 	"github.com/ll931217/claude-hud-enhanced/internal/config"
 	"github.com/ll931217/claude-hud-enhanced/internal/registry"
 	"github.com/ll931217/claude-hud-enhanced/internal/statusline"
+	"github.com/ll931217/claude-hud-enhanced/internal/theme"
 	"github.com/ll931217/claude-hud-enhanced/internal/transcript"
 )
 
@@ -113,7 +114,7 @@ func (s *SessionSection) getModelName() string {
 	return model
 }
 
-// getContextBar returns the context window progress bar
+// getContextBar returns the context window progress bar with color coding
 func (s *SessionSection) getContextBar() string {
 	cw := s.parser.GetContextWindow()
 	if cw == nil || cw.ContextWindowSize == 0 {
@@ -121,17 +122,26 @@ func (s *SessionSection) getContextBar() string {
 	}
 
 	percentage := s.parser.GetContextPercentage()
+	bar := s.progressBar(percentage, 10) // 10-char width
+	color := theme.ContextColor(percentage)
 
-	// Create progress bar
-	bar := s.progressBar(percentage, 15)
+	result := fmt.Sprintf("%s[%s]%d%%%s", color, bar, percentage, theme.Reset)
 
-	return fmt.Sprintf("[%s]%d%%", bar, percentage)
+	// Add token breakdown at high context usage
+	if percentage >= 85 {
+		breakdown := s.getTokenBreakdown(cw)
+		if breakdown != "" {
+			result += fmt.Sprintf("%s %s%s", theme.Dim, breakdown, theme.Reset)
+		}
+	}
+
+	return result
 }
 
 // progressBar creates a visual progress bar
 func (s *SessionSection) progressBar(percentage, width int) string {
 	if width <= 0 {
-		width = 15
+		width = 10 // Default to 10 chars
 	}
 
 	filled := percentage * width / 100
@@ -145,6 +155,33 @@ func (s *SessionSection) progressBar(percentage, width int) string {
 	}
 
 	return strings.Repeat("█", filled) + strings.Repeat("░", empty)
+}
+
+// getTokenBreakdown returns token breakdown at high context usage
+func (s *SessionSection) getTokenBreakdown(cw *transcript.ContextWindow) string {
+	usage := cw.CurrentUsage
+
+	inputTokens := usage.InputTokens
+	cacheTokens := usage.CacheCreationInputTokens + usage.CacheReadInputTokens
+
+	// Only show breakdown if there are actual tokens
+	if inputTokens == 0 && cacheTokens == 0 {
+		return ""
+	}
+
+	var parts []string
+	if inputTokens > 0 {
+		parts = append(parts, fmt.Sprintf("in: %s", formatTokens(inputTokens)))
+	}
+	if cacheTokens > 0 {
+		parts = append(parts, fmt.Sprintf("cache: %s", formatTokens(cacheTokens)))
+	}
+
+	if len(parts) == 0 {
+		return ""
+	}
+
+	return fmt.Sprintf("(%s)", strings.Join(parts, ", "))
 }
 
 // getDuration returns the session duration
@@ -264,4 +301,15 @@ func (s *SessionSection) getCost() string {
 		return fmt.Sprintf("$%.2f", cost)
 	}
 	return fmt.Sprintf("$%.2f", cost)
+}
+
+// formatTokens formats a token count with suffix (k, M)
+func formatTokens(tokens int) string {
+	if tokens >= 1_000_000 {
+		return fmt.Sprintf("%.1fM", float64(tokens)/1_000_000)
+	}
+	if tokens >= 1_000 {
+		return fmt.Sprintf("%dk", tokens/1_000)
+	}
+	return fmt.Sprintf("%d", tokens)
 }

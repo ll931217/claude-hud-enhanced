@@ -223,7 +223,9 @@ func TestParser_ContextWindow(t *testing.T) {
 	}
 
 	percentage := p.GetContextPercentage()
-	expected := 55000 * 100 / 200000 // 27.5%
+	// Calculate expected with AUTOCOMPACT_BUFFER (128000 tokens)
+	// (55000 + 128000) * 100 / 200000 = 91.5%
+	expected := (55000 + AUTOCOMPACT_BUFFER) * 100 / 200000
 	if percentage != expected {
 		t.Errorf("GetContextPercentage() = %v, want %v", percentage, expected)
 	}

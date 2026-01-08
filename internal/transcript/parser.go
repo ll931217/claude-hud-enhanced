@@ -14,6 +14,11 @@ import (
 	"github.com/ll931217/claude-hud-enhanced/internal/errors"
 )
 
+// Constants for context window calculations
+const (
+	AUTOCOMPACT_BUFFER = 128000 // Tokens reserved for auto-compact
+)
+
 // Parser handles parsing Claude Code transcript JSONL files
 type Parser struct {
 	mu               sync.RWMutex
@@ -374,13 +379,17 @@ func (p *Parser) HasContextWindow() bool {
 }
 
 // GetContextPercentage returns context usage as a percentage
+// Includes auto-compact buffer in calculation for accuracy
 func (p *Parser) GetContextPercentage() int {
 	cw := p.GetContextWindow()
 	if cw == nil || cw.ContextWindowSize == 0 {
 		return 0
 	}
 
-	percentage := cw.CurrentUsage.TotalInput() * 100 / cw.ContextWindowSize
+	totalTokens := cw.CurrentUsage.TotalInput()
+
+	// Include auto-compact buffer in calculation
+	percentage := (totalTokens + AUTOCOMPACT_BUFFER) * 100 / cw.ContextWindowSize
 	if percentage > 100 {
 		return 100
 	}
