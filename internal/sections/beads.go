@@ -143,15 +143,18 @@ func (b *BeadsSection) formatSummary() string {
 		return "[Beads: no issues]"
 	}
 
-	// Build summary (compact format for statusline)
+	// Build summary
 	var parts []string
-	parts = append(parts, fmt.Sprintf("☍ %d", total))
+	parts = append(parts, fmt.Sprintf("☍ %d total", total))
 
 	if inProgressCount > 0 {
-		parts = append(parts, fmt.Sprintf("↻ %d", inProgressCount))
+		parts = append(parts, fmt.Sprintf("↻ %d in progress", inProgressCount))
+	}
+	if openCount := b.reader.CountByStatus(beads.StatusOpen); openCount > 0 {
+		parts = append(parts, fmt.Sprintf("○ %d open", openCount))
 	}
 	if closedCount > 0 {
-		parts = append(parts, fmt.Sprintf("✓ %d", closedCount))
+		parts = append(parts, fmt.Sprintf("✓ %d closed", closedCount))
 	}
 
 	return strings.Join(parts, " | ")

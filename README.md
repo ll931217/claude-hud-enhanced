@@ -9,12 +9,17 @@ A sophisticated statusline plugin for Claude Code sessions, providing real-time 
 ## Features
 
 - **Claude Code Integration**: Deep integration with Claude Code session transcripts
+- **Color-Coded Context Bar**: Visual progress bar with green/yellow/red thresholds
+- **Token Breakdown**: Shows detailed token usage at high context (≥85%)
+- **Auto-Compact Buffer**: Accounts for 128k token buffer in calculations
 - **Beads Issue Tracking**: Real-time display of your beads issue tracker status
 - **Worktrunk Support**: Visualize your git worktree management
 - **Git Status**: Show branch, dirty state, ahead/behind, and worktree info
 - **System Monitoring**: CPU, memory, and disk usage at a glance
 - **Todo Tracking**: Display todo progress from your session
 - **Session Info**: Duration, cost calculation, and model information
+- **Compact Layout**: Optimized 2-line output fits within 80 columns
+- **Auto-Detection**: Works directly with Claude Code without wrapper script
 - **Theming**: Beautiful Catppuccin Mocha color scheme
 - **Nerd Font Icons**: Icon support with ASCII fallback
 - **Performance**: Streaming JSONL parsing with <50ms render latency
@@ -22,7 +27,21 @@ A sophisticated statusline plugin for Claude Code sessions, providing real-time 
 
 ## Quick Start
 
-### Installation
+### One-Line Install
+
+The easiest way to install Claude HUD Enhanced is with the install script:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/ll931217/claude-hud-enhanced/main/install.sh | sh
+```
+
+This will:
+1. Detect your platform (Linux/macOS, amd64/arm64)
+2. Download the latest binary from GitHub Releases
+3. Install it to `~/.claude/claude-hud`
+4. Update your Claude Code settings (if `jq` is installed)
+
+### Manual Installation
 
 #### From Source
 
@@ -39,14 +58,14 @@ Download the appropriate binary for your platform from the [releases page](https
 
 ```bash
 # Linux AMD64
-wget https://github.com/ll931217/claude-hud-enhanced/releases/latest/download/claude-hud-linux-amd64.tar.gz
-tar -xzf claude-hud-linux-amd64.tar.gz
-sudo cp claude-hud /usr/local/bin/
+wget https://github.com/ll931217/claude-hud-enhanced/releases/latest/download/claude-hud-linux-amd64
+chmod +x claude-hud-linux-amd64
+sudo cp claude-hud-linux-amd64 /usr/local/bin/claude-hud
 
 # macOS ARM64
-wget https://github.com/ll931217/claude-hud-enhanced/releases/latest/download/claude-hud-darwin-arm64.tar.gz
-tar -xzf claude-hud-darwin-arm64.tar.gz
-sudo cp claude-hud /usr/local/bin/
+wget https://github.com/ll931217/claude-hud-enhanced/releases/latest/download/claude-hud-darwin-arm64
+chmod +x claude-hud-darwin-arm64
+sudo cp claude-hud-darwin-arm64 /usr/local/bin/claude-hud
 ```
 
 ### Configuration
@@ -204,28 +223,49 @@ sections:
 ### Session Section
 
 Displays information about your current Claude Code session:
+- Model name (e.g., "glm-4.7", "Claude Opus")
+- Color-coded **context progress bar** (green/yellow/red based on usage)
+- Token breakdown at high usage (≥85%)
 - Session duration
-- Estimated token cost
-- Active tool count
-- Agent count
+- Tool usage activity
+- Agent activity
 - Todo progress
+- Estimated cost
 
-Example:
+**Context Progress Bar Colors:**
+- 🟢 Green (<70%): Healthy context usage
+- 🟡 Yellow (70-84%): Approaching limit
+- 🔴 Red (≥85%): High usage with token breakdown
+
+Example output (compact 2-line mode):
 ```
-Session: 2h15m | $0.45 | 3 tools | 1 agent | ✓ 5/7 todos
+glm-4.7 1h41m | [████░░░░░░]60% | ◐ Implement feature X
+☍ 40 total | ✓ 40 closed | 🌿 main * 2 changes ↓25
+
+~/claude-hud-enhanced | 🐹 Go | 💻 1% | 🎯 12.6/23GB | 💾 10GB
+```
+
+At high context usage (≥85%), shows token breakdown:
+```
+glm-4.7 2h15m | [█████████░]92% (in: 185k, cache: 12k) | $0.45
 ```
 
 ### Beads Section
 
 Shows your beads issue tracker status:
-- Total open issues
-- Issues in progress
-- Blocked issues
-- Current task
+- Total issue count
+- In-progress issues
+- Closed issues
+- Current active task (if any)
 
 Example:
 ```
-Beads: 12 open | 3 in progress | 1 blocked | [dotfiles-abc.1] Implement feature X
+☍ 40 | ✓ 40 closed
+```
+
+When working on an issue:
+```
+◐ [beads-123] Implement feature X (P2)
 ```
 
 ### Status Section
@@ -245,15 +285,15 @@ Example:
 ### Workspace Section
 
 System and workspace information:
-- CPU usage percentage
-- Memory usage
-- Disk usage
-- Current directory (truncated)
+- Current directory (truncated for fit)
 - Detected programming language
+- CPU usage percentage
+- Memory usage (used/total)
+- Disk available space
 
 Example:
 ```
-💻 45% CPU | 🎯 62% RAM | 💾 78% Disk | ~/Projects/claude-hud-enhanced | Go
+~/claude-hud-enhanced | 🐹 Go | 💻 1% | 🎯 12.6/23GB | 💾 10GB
 ```
 
 ## Development
