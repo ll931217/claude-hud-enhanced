@@ -116,7 +116,7 @@ func TestStatus_FormatStatus(t *testing.T) {
 				Dirty:    true,
 				Modified: 1,
 			},
-			want: "🌿 main * 1 changes",
+			want: "🌿 main * 1",
 		},
 		{
 			name: "ahead behind",
@@ -144,7 +144,7 @@ func TestStatus_FormatStatus(t *testing.T) {
 				Modified: 1,
 				Dirty:    true,
 			},
-			want: "🌿 main * 1 changes",
+			want: "🌿 main * 1",
 		},
 	}
 

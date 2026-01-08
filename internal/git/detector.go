@@ -313,10 +313,10 @@ func (s *Status) FormatStatus() string {
 		parts = append(parts, "*")
 	}
 
-	// Changes count
+	// Changes count (compact format)
 	totalChanges := s.Modified + s.Added + s.Deleted + s.Untracked
 	if totalChanges > 0 {
-		parts = append(parts, fmt.Sprintf("%d changes", totalChanges))
+		parts = append(parts, fmt.Sprintf("%d", totalChanges))
 	}
 
 	// Ahead/Behind

@@ -45,8 +45,8 @@ func (s *SessionSection) Render() string {
 	defer cancel()
 
 	if err := s.parser.Parse(ctx); err != nil {
-		// Graceful degradation - return placeholder
-		return "[Session: no transcript]"
+		// Graceful degradation - return placeholder (compact)
+		return "[No transcript]"
 	}
 
 	var parts []string
