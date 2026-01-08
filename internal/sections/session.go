@@ -3,6 +3,7 @@ package sections
 import (
 	"context"
 	"fmt"
+	"os"
 	"strings"
 	"time"
 
@@ -205,8 +206,13 @@ func (s *SessionSection) getAgentActivity() string {
 
 // getTranscriptPath returns the transcript path from environment or default
 func getTranscriptPath() string {
-	// Check environment variable
-	// For now, return empty - will be set by Claude Code
+	// Check environment variable set by wrapper script
+	if path := os.Getenv("CLAUDE_HUD_TRANSCRIPT_PATH"); path != "" {
+		return path
+	}
+
+	// For standalone mode, try to find the latest transcript in cwd
+	// Look for .claude/transcript.json or similar
 	return ""
 }
 
