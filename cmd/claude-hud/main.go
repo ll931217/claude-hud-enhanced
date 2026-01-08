@@ -23,6 +23,17 @@ var (
 )
 
 func main() {
+	// Auto-detect statusline mode: if stdin has data (not a TTY), assume statusline mode
+	// This allows the binary to work directly with Claude Code without the --statusline flag
+	if !isStdinTTY() && !hasExplicitFlags() {
+		// Parse JSON from stdin and run in statusline mode
+		if err := runStatuslineMode(); err != nil {
+			// Silent failure for statusline mode
+			os.Exit(0)
+		}
+		os.Exit(0)
+	}
+
 	// Parse flags
 	flag.Parse()
 
@@ -226,4 +237,16 @@ func (a *Application) Stop() error {
 
 	errors.Info("app", "application stopped successfully")
 	return nil
+}
+
+// isStdinTTY checks if stdin is a terminal (has no piped input)
+func isStdinTTY() bool {
+	fileInfo, _ := os.Stdin.Stat()
+	return fileInfo.Mode()&os.ModeCharDevice != 0
+}
+
+// hasExplicitFlags checks if any command-line flags were provided
+func hasExplicitFlags() bool {
+	// Check if any arguments were passed (beyond program name)
+	return len(os.Args) > 1
 }

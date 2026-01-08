@@ -133,7 +133,6 @@ func getRepoPath() string {
 // formatSummary formats a summary when no active issue
 func (b *BeadsSection) formatSummary() string {
 	// Get counts by status
-	openCount := b.reader.CountByStatus(beads.StatusOpen)
 	inProgressCount := b.reader.CountByStatus(beads.StatusInProgress)
 	closedCount := b.reader.CountByStatus(beads.StatusClosed)
 
@@ -144,18 +143,15 @@ func (b *BeadsSection) formatSummary() string {
 		return "[Beads: no issues]"
 	}
 
-	// Build summary
+	// Build summary (compact format for statusline)
 	var parts []string
-	parts = append(parts, fmt.Sprintf("☍ %d total", total))
+	parts = append(parts, fmt.Sprintf("☍ %d", total))
 
 	if inProgressCount > 0 {
-		parts = append(parts, fmt.Sprintf("↻ %d in progress", inProgressCount))
-	}
-	if openCount > 0 {
-		parts = append(parts, fmt.Sprintf("○ %d open", openCount))
+		parts = append(parts, fmt.Sprintf("↻ %d", inProgressCount))
 	}
 	if closedCount > 0 {
-		parts = append(parts, fmt.Sprintf("✓ %d closed", closedCount))
+		parts = append(parts, fmt.Sprintf("✓ %d", closedCount))
 	}
 
 	return strings.Join(parts, " | ")

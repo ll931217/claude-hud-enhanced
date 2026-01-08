@@ -36,9 +36,9 @@ func (w *WorkspaceSection) Render() string {
 
 	var parts []string
 
-	// Add directory path with icon
+	// Add directory path (no icon to save space)
 	if dir := w.monitor.FormatDirDisplay(); dir != "" {
-		parts = append(parts, "📁 "+dir)
+		parts = append(parts, dir)
 	}
 
 	// Add language detection

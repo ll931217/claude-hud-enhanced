@@ -202,9 +202,25 @@ func (m *Monitor) FormatDirDisplay() string {
 		}
 	}
 
-	// Truncate if too long
-	if len(dir) > 30 {
-		dir = "..." + dir[len(dir)-27:]
+	// Truncate if too long (shorter for statusline mode)
+	// Keep the beginning (~/) and the project name
+	if len(dir) > 25 {
+		// For paths with ~, keep ~/ and last component
+		if strings.HasPrefix(dir, "~/") {
+			parts := strings.Split(dir, "/")
+			if len(parts) >= 2 {
+				lastPart := parts[len(parts)-1]
+				// Allow up to 22 chars for ~/project-name
+				if len(lastPart) > 22 {
+					// Truncate the project name
+					lastPart = "..." + lastPart[len(lastPart)-19:]
+				}
+				dir = "~/" + lastPart
+			}
+		} else {
+			// For other paths, keep beginning
+			dir = dir[:22] + "..."
+		}
 	}
 
 	return dir
