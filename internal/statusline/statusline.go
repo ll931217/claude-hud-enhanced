@@ -239,3 +239,39 @@ func (s *Statusline) GetSections() []registry.Section {
 func (s *Statusline) Refresh() error {
 	return s.Render()
 }
+
+// RenderStatuslineMode renders for Claude Code statusline (multiline, no ANSI clear codes)
+func (s *Statusline) RenderStatuslineMode() error {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+
+	var lines []string
+
+	// Render each section
+	for _, section := range s.sections {
+		// Skip disabled sections
+		if !section.Enabled() {
+			continue
+		}
+
+		// Render the section with error handling
+		content := s.renderSection(section)
+
+		// Skip empty sections
+		if content == "" {
+			continue
+		}
+
+		lines = append(lines, content)
+	}
+
+	// Output each line on its own line (no ANSI codes for Claude Code)
+	for i, line := range lines {
+		if i > 0 {
+			fmt.Println()
+		}
+		fmt.Print(line)
+	}
+
+	return nil
+}

@@ -32,3 +32,5 @@ Thumbs.db
 # Local build artifacts
 claude-hud
 claude-hud-*
+# But allow the statusline wrapper script
+!scripts/claude-hud-statusline.sh

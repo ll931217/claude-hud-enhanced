@@ -1,10 +1,11 @@
-.PHONY: build clean test run release release-all benchmark help
+.PHONY: build clean test run release release-all benchmark help install-statusline
 
 BINARY_NAME=claude-hud
 BUILD_DIR=bin
 RELEASE_DIR=release
 GO=go
 GOLINT=golangci-lint
+CLAUDE_DIR=${HOME}/.claude
 
 # Version information (can be overridden by make arguments)
 VERSION?=$(shell git describe --tags --always --dirty 2>/dev/null || echo "dev")
@@ -36,6 +37,7 @@ help:
 	@echo "  make run          - Run the application"
 	@echo "  make fmt          - Format code"
 	@echo "  make lint         - Run linter"
+	@echo "  make install-statusline - Install statusline script for Claude Code"
 	@echo ""
 	@echo "Build variables:"
 	@echo "  VERSION          - Version tag (default: git describe or 'dev')"
@@ -125,3 +127,23 @@ dev: fmt lint test
 
 dev-quick:
 	@$(MAKE) build && $(BUILD_DIR)/$(BINARY_NAME)
+
+# Install statusline for Claude Code
+install-statusline: build
+	@echo "Installing Claude HUD Enhanced statusline..."
+	@mkdir -p $(CLAUDE_DIR)
+	@cp $(BUILD_DIR)/$(BINARY_NAME) $(CLAUDE_DIR)/$(BINARY_NAME)-new
+	@chmod +x $(CLAUDE_DIR)/$(BINARY_NAME)-new
+	@cp scripts/claude-hud-statusline.sh $(CLAUDE_DIR)/
+	@chmod +x $(CLAUDE_DIR)/claude-hud-statusline.sh
+	@echo "Installation complete!"
+	@echo ""
+	@echo "Add this to ~/.claude/settings.json:"
+	@echo '{'
+	@echo '  "statusLine": {'
+	@echo '    "command": "~/.claude/claude-hud-statusline.sh",'
+	@echo '    "padding": 0,'
+	@echo '    "type": "command"'
+	@echo '  }'
+	@echo '}'
+

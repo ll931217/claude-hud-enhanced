@@ -19,6 +19,7 @@ import (
 var (
 	showVersion = flag.Bool("version", false, "Show version information")
 	showBuild   = flag.Bool("build-info", false, "Show detailed build information")
+	statuslineMode = flag.Bool("statusline", false, "Run in Claude Code statusline mode (single shot, multiline output)")
 )
 
 func main() {
@@ -40,6 +41,15 @@ func main() {
 		fmt.Printf("Commit:    %s\n", info["commit"])
 		fmt.Printf("Built At:  %s\n", info["built_at"])
 		fmt.Printf("Go Version: %s\n", info["go_version"])
+		os.Exit(0)
+	}
+
+	// Handle statusline mode - single shot output for Claude Code
+	if *statuslineMode {
+		if err := runStatuslineMode(); err != nil {
+			// Silent failure for statusline mode
+			os.Exit(0)
+		}
 		os.Exit(0)
 	}
 	// Set up panic recovery at the top level
@@ -93,6 +103,34 @@ func main() {
 	}
 
 	errors.Info("main", "Claude HUD Enhanced stopped")
+}
+
+// runStatuslineMode runs the statusline in single-shot mode for Claude Code
+func runStatuslineMode() error {
+	// Load configuration
+	cfg := config.Load()
+	if cfg == nil {
+		cfg = config.DefaultConfig()
+	}
+
+	// Create statusline with registry
+	sl, err := statusline.New(cfg, registry.DefaultRegistry())
+	if err != nil {
+		return fmt.Errorf("failed to create statusline: %w", err)
+	}
+
+	// Create sections from config
+	enabledSections := cfg.GetEnabledSections()
+	for _, sectionName := range enabledSections {
+		section, err := registry.Create(sectionName, cfg)
+		if err != nil {
+			continue
+		}
+		sl.AddSection(section)
+	}
+
+	// Render once and exit (no continuous refresh)
+	return sl.RenderStatuslineMode()
 }
 
 // Application represents the main application

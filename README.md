@@ -90,7 +90,9 @@ debug: false
 
 ### Usage
 
-Run the statusline:
+#### Standalone Mode
+
+Run the statusline in standalone mode (continuous refresh):
 
 ```bash
 claude-hud
@@ -101,6 +103,88 @@ Show version information:
 ```bash
 claude-hud --version
 claude-hud --build-info
+```
+
+#### Claude Code Statusline Mode
+
+Run in single-shot mode for Claude Code integration:
+
+```bash
+claude-hud --statusline
+```
+
+### Claude Code Integration
+
+Claude HUD Enhanced can be used as a custom statusline for Claude Code, providing real-time visibility into your development session.
+
+#### Installation
+
+1. Build the binary:
+```bash
+make build
+```
+
+2. Copy the binary and wrapper script to your `~/.claude` directory:
+```bash
+cp bin/claude-hud ~/.claude/claude-hud-new
+chmod +x ~/.claude/claude-hud-new
+```
+
+3. The wrapper script `claude-hud-statusline.sh` is already included and will be installed to `~/.claude/`.
+
+#### Configuration
+
+Add or update the `statusLine` section in your `~/.claude/settings.json`:
+
+```json
+{
+  "statusLine": {
+    "command": "~/.claude/claude-hud-statusline.sh",
+    "padding": 0,
+    "type": "command"
+  }
+}
+```
+
+The `padding: 0` setting ensures the statusline extends to the edge of the terminal.
+
+#### Multiline Support
+
+Claude Code's statusline supports multiline output, and Claude HUD Enhanced takes advantage of this by displaying:
+
+1. **Session Info**: Duration, cost, tools, agents, todos
+2. **Beads Status**: Open issues, in progress, blocked, current task
+3. **Git Status**: Branch, dirty state, ahead/behind, worktree info
+4. **Workspace**: CPU, RAM, disk, directory, language
+
+Each section appears on its own line for maximum visibility.
+
+#### Testing
+
+Test your statusline setup with sample JSON input:
+
+```bash
+echo '{"model":{"display_name":"Opus"},"workspace":{"current_dir":"/home/test"}}' | ~/.claude/claude-hud-statusline.sh
+```
+
+#### Customization
+
+Configure which sections appear and their order in `~/.config/claude-hud/config.yaml`:
+
+```yaml
+sections:
+  session:
+    enabled: true
+    order: 1
+  beads:
+    enabled: true
+    order: 2
+  status:
+    enabled: true
+    order: 3
+  workspace:
+    enabled: true
+    order: 4
 ```
 
 ## Sections
