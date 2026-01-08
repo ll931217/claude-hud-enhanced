@@ -59,6 +59,10 @@ Create a configuration file at `~/.config/claude-hud/config.yaml`:
 # Refresh interval in milliseconds (100-5000)
 refresh_interval_ms: 500
 
+# Compact mode (2-line layout vs 4-line layout)
+compact_mode: true
+max_lines: 2
+
 # Section configuration
 sections:
   session:
