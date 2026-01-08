@@ -123,18 +123,24 @@ Claude HUD Enhanced can be used as a custom statusline for Claude Code, providin
 
 #### Installation
 
+Using the Makefile:
+
+```bash
+make install-statusline
+```
+
+Or manually:
+
 1. Build the binary:
 ```bash
 make build
 ```
 
-2. Copy the binary and wrapper script to your `~/.claude` directory:
+2. Copy the binary to your `~/.claude` directory:
 ```bash
-cp bin/claude-hud ~/.claude/claude-hud-new
-chmod +x ~/.claude/claude-hud-new
+cp bin/claude-hud ~/.claude/claude-hud
+chmod +x ~/.claude/claude-hud
 ```
-
-3. The wrapper script `claude-hud-statusline.sh` is already included and will be installed to `~/.claude/`.
 
 #### Configuration
 
@@ -143,7 +149,7 @@ Add or update the `statusLine` section in your `~/.claude/settings.json`:
 ```json
 {
   "statusLine": {
-    "command": "~/.claude/claude-hud-statusline.sh",
+    "command": "~/.claude/claude-hud",
     "padding": 0,
     "type": "command"
   }
@@ -151,6 +157,8 @@ Add or update the `statusLine` section in your `~/.claude/settings.json`:
 ```
 
 The `padding: 0` setting ensures the statusline extends to the edge of the terminal.
+
+The binary will automatically read the JSON context from Claude Code's stdin and extract the workspace directory and transcript path.
 
 #### Multiline Support
 
@@ -161,14 +169,14 @@ Claude Code's statusline supports multiline output, and Claude HUD Enhanced take
 3. **Git Status**: Branch, dirty state, ahead/behind, worktree info
 4. **Workspace**: CPU, RAM, disk, directory, language
 
-Each section appears on its own line for maximum visibility.
+Each section appears on its own line for maximum visibility (or 2 lines in compact mode).
 
 #### Testing
 
 Test your statusline setup with sample JSON input:
 
 ```bash
-echo '{"model":{"display_name":"Opus"},"workspace":{"current_dir":"/home/test"}}' | ~/.claude/claude-hud-statusline.sh
+echo '{"model":{"display_name":"Opus"},"workspace":{"current_dir":"/home/test"}}' | ~/.claude/claude-hud --statusline
 ```
 
 #### Customization

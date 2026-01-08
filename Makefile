@@ -132,18 +132,17 @@ dev-quick:
 install-statusline: build
 	@echo "Installing Claude HUD Enhanced statusline..."
 	@mkdir -p $(CLAUDE_DIR)
-	@cp $(BUILD_DIR)/$(BINARY_NAME) $(CLAUDE_DIR)/$(BINARY_NAME)-new
-	@chmod +x $(CLAUDE_DIR)/$(BINARY_NAME)-new
-	@cp scripts/claude-hud-statusline.sh $(CLAUDE_DIR)/
-	@chmod +x $(CLAUDE_DIR)/claude-hud-statusline.sh
+	@cp $(BUILD_DIR)/$(BINARY_NAME) $(CLAUDE_DIR)/$(BINARY_NAME)
+	@chmod +x $(CLAUDE_DIR)/$(BINARY_NAME)
 	@echo "Installation complete!"
 	@echo ""
 	@echo "Add this to ~/.claude/settings.json:"
 	@echo '{'
 	@echo '  "statusLine": {'
-	@echo '    "command": "~/.claude/claude-hud-statusline.sh",'
+	@echo '    "command": "~/.claude/claude-hud",'
 	@echo '    "padding": 0,'
 	@echo '    "type": "command"'
 	@echo '  }'
 	@echo '}'
+
 

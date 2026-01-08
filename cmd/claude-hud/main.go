@@ -107,10 +107,31 @@ func main() {
 
 // runStatuslineMode runs the statusline in single-shot mode for Claude Code
 func runStatuslineMode() error {
+	// Read JSON from stdin (non-blocking if no input)
+	input, err := readStdinJSON()
+	if err != nil {
+		// Invalid JSON, but continue anyway
+		input = nil
+	}
+
 	// Load configuration
 	cfg := config.Load()
 	if cfg == nil {
 		cfg = config.DefaultConfig()
+	}
+
+	// Set global context from JSON input
+	if input != nil {
+		// Change to workspace directory if specified
+		if input.Workspace.CurrentDir != "" {
+			if err := os.Chdir(input.Workspace.CurrentDir); err == nil {
+				statusline.SetContext(
+					input.TranscriptPath,
+					input.Workspace.CurrentDir,
+					input.Model.DisplayName,
+				)
+			}
+		}
 	}
 
 	// Create statusline with registry

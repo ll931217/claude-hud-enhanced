@@ -9,6 +9,7 @@ import (
 
 	"github.com/ll931217/claude-hud-enhanced/internal/config"
 	"github.com/ll931217/claude-hud-enhanced/internal/registry"
+	"github.com/ll931217/claude-hud-enhanced/internal/statusline"
 	"github.com/ll931217/claude-hud-enhanced/internal/transcript"
 )
 
@@ -204,9 +205,14 @@ func (s *SessionSection) getAgentActivity() string {
 	return strings.Join(parts, " | ")
 }
 
-// getTranscriptPath returns the transcript path from environment or default
+// getTranscriptPath returns the transcript path from context, environment, or default
 func getTranscriptPath() string {
-	// Check environment variable set by wrapper script
+	// Check global context from Claude Code first
+	if path := statusline.GetTranscriptPath(); path != "" {
+		return path
+	}
+
+	// Fallback to environment variable (for standalone mode or wrapper script)
 	if path := os.Getenv("CLAUDE_HUD_TRANSCRIPT_PATH"); path != "" {
 		return path
 	}
