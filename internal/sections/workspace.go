@@ -36,9 +36,9 @@ func (w *WorkspaceSection) Render() string {
 
 	var parts []string
 
-	// Add directory path
+	// Add directory path with icon
 	if dir := w.monitor.FormatDirDisplay(); dir != "" {
-		parts = append(parts, "📁", dir)
+		parts = append(parts, "📁 "+dir)
 	}
 
 	// Add language detection
@@ -47,27 +47,21 @@ func (w *WorkspaceSection) Render() string {
 	}
 
 	// Add system resources
-	var resources []string
-
 	if cpu := w.monitor.FormatCPUDisplay(); cpu != "" {
-		resources = append(resources, cpu)
+		parts = append(parts, cpu)
 	}
 
 	if mem := w.monitor.FormatMemoryDisplay(); mem != "" {
-		resources = append(resources, mem)
+		parts = append(parts, mem)
 	}
 
 	if disk := w.monitor.FormatDiskDisplay(); disk != "" {
-		resources = append(resources, disk)
-	}
-
-	if len(resources) > 0 {
-		parts = append(parts, strings.Join(resources, " | "))
+		parts = append(parts, disk)
 	}
 
 	if len(parts) == 0 {
 		return "[Workspace: waiting for data]"
 	}
 
-	return strings.Join(parts, " ")
+	return strings.Join(parts, " | ")
 }

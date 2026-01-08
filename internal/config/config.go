@@ -17,6 +17,8 @@ type Config struct {
 	Colors           ColorsConfig   `yaml:"colors"`
 	RefreshIntervalMs int            `yaml:"refresh_interval_ms"`
 	Debug            bool           `yaml:"debug"`
+	CompactMode      bool           `yaml:"compact_mode"`
+	MaxLines         int            `yaml:"max_lines"`
 }
 
 // SectionsConfig holds configuration for all HUD sections
@@ -79,6 +81,8 @@ func defaultConfig() *Config {
 		},
 		RefreshIntervalMs: 300,
 		Debug:            false,
+		CompactMode:      true,
+		MaxLines:         2,
 	}
 }
 

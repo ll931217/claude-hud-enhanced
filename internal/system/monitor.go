@@ -155,7 +155,7 @@ func (m *Monitor) FormatCPUDisplay() string {
 	if m.cpu.UsagePercent == 0 {
 		return ""
 	}
-	return fmt.Sprintf("💻 CPU: %.0f%%", m.cpu.UsagePercent)
+	return fmt.Sprintf("💻 %.0f%%", m.cpu.UsagePercent)
 }
 
 // FormatMemoryDisplay formats memory usage for display
@@ -167,7 +167,7 @@ func (m *Monitor) FormatMemoryDisplay() string {
 	usedGB := float64(m.memory.Used) / 1024 / 1024 / 1024
 	totalGB := float64(m.memory.Total) / 1024 / 1024 / 1024
 
-	return fmt.Sprintf("🎯 RAM: %.1f/%.0fGB", usedGB, totalGB)
+	return fmt.Sprintf("🎯 %.1f/%.0fGB", usedGB, totalGB)
 }
 
 // FormatDiskDisplay formats disk usage for display
@@ -178,7 +178,7 @@ func (m *Monitor) FormatDiskDisplay() string {
 
 	freeGB := float64(m.disk.Available) / 1024 / 1024 / 1024
 
-	return fmt.Sprintf("💾 %.0fGB free", freeGB)
+	return fmt.Sprintf("💾 %.0fGB", freeGB)
 }
 
 // FormatDirDisplay formats the current directory for display

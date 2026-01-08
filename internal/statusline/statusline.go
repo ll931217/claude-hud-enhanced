@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"strings"
 	"sync"
 	"time"
 
@@ -245,6 +246,11 @@ func (s *Statusline) RenderStatuslineMode() error {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
+	// Check if compact mode is enabled
+	if s.config.CompactMode {
+		return s.renderCompactMode()
+	}
+
 	var lines []string
 
 	// Render each section
@@ -271,6 +277,51 @@ func (s *Statusline) RenderStatuslineMode() error {
 			fmt.Println()
 		}
 		fmt.Print(line)
+	}
+
+	return nil
+}
+
+// renderCompactMode renders sections in compact 2-line mode
+func (s *Statusline) renderCompactMode() error {
+	var line1, line2 []string
+
+	// Line 1: Session + Beads + Git (project state)
+	for _, section := range s.sections {
+		if !section.Enabled() {
+			continue
+		}
+		switch section.Name() {
+		case "session", "beads", "status":
+			content := s.renderSection(section)
+			if content != "" {
+				line1 = append(line1, content)
+			}
+		}
+	}
+
+	// Line 2: Workspace (environment)
+	for _, section := range s.sections {
+		if !section.Enabled() {
+			continue
+		}
+		if section.Name() == "workspace" {
+			content := s.renderSection(section)
+			if content != "" {
+				line2 = append(line2, content)
+			}
+		}
+	}
+
+	// Output with consistent separator
+	if len(line1) > 0 {
+		fmt.Print(strings.Join(line1, " | "))
+	}
+	if len(line2) > 0 {
+		if len(line1) > 0 {
+			fmt.Println()
+		}
+		fmt.Print(strings.Join(line2, " | "))
 	}
 
 	return nil
