@@ -29,3 +29,6 @@ Thumbs.db
 # Temporary
 *.tmp
 *.log
+# Local build artifacts
+claude-hud
+claude-hud-*
