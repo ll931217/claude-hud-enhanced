@@ -284,11 +284,11 @@ func DefaultLayout() LayoutConfig {
 	return LayoutConfig{
 		Lines: []LineConfig{
 			{
-				Sections:  []string{"model", "contextbar", "duration"},
+				Sections:  []string{"model", "contextbar", "duration", "beads"},
 				Separator: " | ",
 			},
 			{
-				Sections:  []string{"workspace", "status", "beads"},
+				Sections:  []string{"workspace", "status"},
 				Separator: " | ",
 			},
 			{
