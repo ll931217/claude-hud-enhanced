@@ -78,15 +78,8 @@ jobs:
           echo "GOOS=${{ matrix.goos }}" >> $GITHUB_ENV
           echo "GOARCH=${{ matrix.goarch }}" >> $GITHUB_ENV
 
-          # Determine binary extension
-          BINARY_EXT=""
-          if [ "${{ matrix.goos }}" == "windows" ]; then
-            BINARY_EXT=".exe"
-          fi
-          echo "BINARY_EXT=${BINARY_EXT}" >> $GITHUB_ENV
-
           # Determine output filename
-          BINARY_NAME="claude-hud-${{ matrix.goos }}-${{ matrix.goarch }}${BINARY_EXT}"
+          BINARY_NAME="claude-hud-${{ matrix.goos }}-${{ matrix.goarch }}"
           echo "BINARY_NAME=${BINARY_NAME}" >> $GITHUB_ENV
 
       - name: Build binary
@@ -115,8 +108,6 @@ jobs:
             goarch: amd64
           - goos: darwin
             goarch: arm64
-          - goos: windows
-            goarch: amd64
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -124,7 +115,7 @@ jobs:
       - name: Download binary
         uses: actions/download-artifact@v4
         with:
-          name: claude-hud-${{ matrix.goos }}-${{ matrix.goarch }}${{ matrix.goos == 'windows' && '.exe' || '' }}
+          name: claude-hud-${{ matrix.goos }}-${{ matrix.goarch }}
           path: .
 
       - name: Create archive
@@ -132,13 +123,8 @@ jobs:
         run: |
           VERSION=${{ github.ref_type == 'tag' && github.ref_name || 'dev' }}
 
-          if [ "${{ matrix.goos }}" == "windows" ]; then
-            ARCHIVE="claude-hud-${VERSION}-${{ matrix.goos }}-${{ matrix.goarch }}.zip"
-            zip -q "${ARCHIVE}" claude-hud*
-          else
-            ARCHIVE="claude-hud-${VERSION}-${{ matrix.goos }}-${{ matrix.goarch }}.tar.gz"
-            tar -czf "${ARCHIVE}" claude-hud*
-          fi
+          ARCHIVE="claude-hud-${VERSION}-${{ matrix.goos }}-${{ matrix.goarch }}.tar.gz"
+          tar -czf "${ARCHIVE}" claude-hud*
 
           echo "ARCHIVE=${ARCHIVE}" >> $GITHUB_ENV
 

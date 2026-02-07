@@ -19,8 +19,8 @@ LDFLAGS=-ldflags "-X github.com/ll931217/claude-hud-enhanced/internal/version.Ve
                    -X github.com/ll931217/claude-hud-enhanced/internal/version.BuildDate=$(BUILD_DATE) \
                    -X github.com/ll931217/claude-hud-enhanced/internal/version.GoVersion=$(GO_VERSION)"
 
-# Platform-specific build targets
-PLATFORMS=linux/amd64 linux/arm64 darwin/amd64 darwin/arm64 windows/amd64
+# Platform-specific build targets (Linux and macOS only)
+PLATFORMS=linux/amd64 linux/arm64 darwin/amd64 darwin/arm64
 
 help:
 	@echo "Claude HUD Enhanced - Build System"
@@ -54,20 +54,14 @@ build:
 release:
 	@echo "Building release $(BINARY_NAME) v$(VERSION) for $(GOOS)/$(GOARCH)..."
 	@mkdir -p $(RELEASE_DIR)
-	$(GO) build $(LDFLAGS) -trimpath -o $(RELEASE_DIR)/$(BINARY_NAME)$(BINARY_EXT) ./cmd/claude-hud
-	@echo "Release build complete: $(RELEASE_DIR)/$(BINARY_NAME)$(BINARY_EXT)"
+	$(GO) build $(LDFLAGS) -trimpath -o $(RELEASE_DIR)/$(BINARY_NAME) ./cmd/claude-hud
+	@echo "Release build complete: $(RELEASE_DIR)/$(BINARY_NAME)"
 
 release-all: $(PLATFORMS)
 
 $(PLATFORMS):
 	@echo "Building for $@..."
 	@$(MAKE) release GOOS=$(word 1,$(subst /, ,$@)) GOARCH=$(word 2,$(subst /, ,$@))
-
-# Platform-specific binary extensions
-BINARY_EXT=
-ifeq ($(GOOS),windows)
-BINARY_EXT=.exe
-endif
 
 # Archive creation for releases
 .PHONY: archives
@@ -77,18 +71,10 @@ archives: release-all
 		os=$$(echo $$platform | cut -d'/' -f1); \
 		arch=$$(echo $$platform | cut -d'/' -f2); \
 		binary=$(RELEASE_DIR)/$(BINARY_NAME); \
-		if [ "$$os" = "windows" ]; then \
-			binary=$$binary.exe; \
-		fi; \
 		if [ -f "$$binary" ]; then \
-			archive=$(RELEASE_DIR)/$(BINARY_NAME)-$(VERSION)-$$os-$$arch; \
-			if [ "$$os" = "windows" ]; then \
-				cd $(RELEASE_DIR) && zip -q $$archive.zip $$(basename $$binary); \
-				echo "Created: $$archive.zip"; \
-			else \
-				tar -C $(RELEASE_DIR) -czf $$archive.tar.gz $$(basename $$binary); \
-				echo "Created: $$archive.tar.gz"; \
-			fi; \
+			archive=$(RELEASE_DIR)/$(BINARY_NAME)-$(VERSION)-$$os-$$arch.tar.gz; \
+			tar -C $(RELEASE_DIR) -czf $$archive $$(basename $$binary); \
+			echo "Created: $$archive"; \
 		fi; \
 	done
 

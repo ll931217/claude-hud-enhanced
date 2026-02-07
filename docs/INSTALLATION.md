@@ -6,7 +6,7 @@ This guide covers installation of Claude HUD Enhanced on various platforms.
 
 - Go 1.25.5 or later
 - Git (for building from source)
-- Unix-like OS (Linux, macOS) or Windows
+- Unix-like OS (Linux, macOS) - Windows users should use WSL2
 
 ## Installation Methods
 
@@ -59,21 +59,6 @@ sudo chmod +x /usr/local/bin/claude-hud
 claude-hud --version
 ```
 
-#### Windows
-
-```powershell
-# Download and extract (using PowerShell)
-Invoke-WebRequest -Uri "https://github.com/ll931217/claude-hud-enhanced/releases/latest/download/claude-hud-windows-amd64.zip" -OutFile "claude-hud.zip"
-Expand-Archive -Path claude-hud.zip -DestinationPath .
-
-# Add to PATH (recommended)
-# 1. Copy claude-hud.exe to a directory in your PATH, e.g. C:\Program Files\claude-hud\
-# 2. Or add the current directory to your PATH
-
-# Verify installation
-claude-hud.exe --version
-```
-
 ### Method 2: Build from Source
 
 #### Prerequisites
@@ -95,9 +80,6 @@ sudo dnf install golang
 ```bash
 brew install go
 ```
-
-**Windows:**
-Download and install from [golang.org/dl](https://golang.org/dl/)
 
 #### Building
 
@@ -129,9 +111,6 @@ make release GOOS=darwin GOARCH=arm64
 
 # macOS AMD64 (Intel)
 make release GOOS=darwin GOARCH=amd64
-
-# Windows AMD64
-make release GOOS=windows GOARCH=amd64
 
 # Build all platforms at once
 make release-all
@@ -222,11 +201,7 @@ go install github.com/ll931217/claude-hud-enhanced/cmd/claude-hud@latest
 ### Remove Binary
 
 ```bash
-# Linux/macOS
 sudo rm /usr/local/bin/claude-hud
-
-# Windows (if installed to C:\Program Files\)
-rmdir /s "C:\Program Files\claude-hud"
 ```
 
 ### Remove Configuration

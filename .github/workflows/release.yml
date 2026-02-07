@@ -140,15 +140,8 @@ jobs:
           echo "GOOS=${{ matrix.goos }}" >> $GITHUB_ENV
           echo "GOARCH=${{ matrix.goarch }}" >> $GITHUB_ENV
 
-          # Determine binary extension
-          BINARY_EXT=""
-          if [ "${{ matrix.goos }}" == "windows" ]; then
-            BINARY_EXT=".exe"
-          fi
-          echo "BINARY_EXT=${BINARY_EXT}" >> $GITHUB_ENV
-
           # Determine output filename
-          BINARY_NAME="claude-hud-${{ matrix.goos }}-${{ matrix.goarch }}${BINARY_EXT}"
+          BINARY_NAME="claude-hud-${{ matrix.goos }}-${{ matrix.goarch }}"
           echo "BINARY_NAME=${BINARY_NAME}" >> $GITHUB_ENV
 
       - name: Run tests
@@ -162,13 +155,8 @@ jobs:
       - name: Create archive
         shell: bash
         run: |
-          if [ "${{ matrix.goos }}" == "windows" ]; then
-            ARCHIVE="claude-hud-${VERSION}-${{ matrix.goos }}-${{ matrix.goarch }}.zip"
-            zip -q "${ARCHIVE}" "${BINARY_NAME}"
-          else
-            ARCHIVE="claude-hud-${VERSION}-${{ matrix.goos }}-${{ matrix.goarch }}.tar.gz"
-            tar -czf "${ARCHIVE}" "${BINARY_NAME}"
-          fi
+          ARCHIVE="claude-hud-${VERSION}-${{ matrix.goos }}-${{ matrix.goarch }}.tar.gz"
+          tar -czf "${ARCHIVE}" "${BINARY_NAME}"
 
           echo "ARCHIVE=${ARCHIVE}" >> $GITHUB_ENV
 

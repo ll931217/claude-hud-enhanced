@@ -24,7 +24,7 @@ A sophisticated statusline plugin for Claude Code sessions, providing real-time 
 - **Theming**: Beautiful Catppuccin Mocha color scheme
 - **Nerd Font Icons**: Icon support with ASCII fallback
 - **Performance**: Streaming JSONL parsing with <50ms render latency
-- **Cross-Platform**: Builds for Linux, macOS, and Windows
+- **Cross-Platform**: Builds for Linux and macOS
 
 ## Quick Start
 

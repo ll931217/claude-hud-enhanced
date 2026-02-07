@@ -12,7 +12,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - **Context Health Monitoring**: Shows color-coded context progress bar (green/yellow/red) with token breakdown at high usage (>=85%)
 - **Multi-Source Integration**: Combines data from Claude Code stdin, transcript files, Git, Beads issue tracker, and system monitoring
 - **Flexible Layout**: Supports both 2-line compact mode and 4-line full mode display
-- **Cross-Platform**: Builds for Linux, macOS, and Windows with single binary distribution
+- **Cross-Platform**: Builds for Linux and macOS with single binary distribution
 
 ## Development Commands
 
@@ -25,10 +25,10 @@ make build
 # Build release (optimized, trimmed paths)
 make release
 
-# Build for all platforms (linux/amd64, linux/arm64, darwin/amd64, darwin/arm64, windows/amd64)
+# Build for all platforms (linux/amd64, linux/arm64, darwin/amd64, darwin/arm64)
 make release-all
 
-# Create release archives (tar.gz for Unix, .zip for Windows)
+# Create release archives (tar.gz)
 make archives
 
 # Install statusline for Claude Code (copies to ~/.claude/claude-hud)
