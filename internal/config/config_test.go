@@ -30,10 +30,12 @@ func TestDefaultConfig(t *testing.T) {
 		order    int
 		checkFn  func() (bool, int)
 	}{
-		{"session", true, 1, func() (bool, int) { return config.Sections.Session.Enabled, config.Sections.Session.Order }},
-		{"beads", true, 2, func() (bool, int) { return config.Sections.Beads.Enabled, config.Sections.Beads.Order }},
-		{"status", true, 3, func() (bool, int) { return config.Sections.Status.Enabled, config.Sections.Status.Order }},
-		{"workspace", true, 4, func() (bool, int) { return config.Sections.Workspace.Enabled, config.Sections.Workspace.Order }},
+		{"model", true, 1, func() (bool, int) { return config.Sections.Model.Enabled, config.Sections.Model.Order }},
+		{"contextbar", true, 2, func() (bool, int) { return config.Sections.ContextBar.Enabled, config.Sections.ContextBar.Order }},
+		{"duration", true, 3, func() (bool, int) { return config.Sections.Duration.Enabled, config.Sections.Duration.Order }},
+		{"beads", true, 4, func() (bool, int) { return config.Sections.Beads.Enabled, config.Sections.Beads.Order }},
+		{"status", true, 5, func() (bool, int) { return config.Sections.Status.Enabled, config.Sections.Status.Order }},
+		{"workspace", true, 6, func() (bool, int) { return config.Sections.Workspace.Enabled, config.Sections.Workspace.Order }},
 	}
 
 	for _, tt := range tests {
@@ -118,7 +120,7 @@ func TestLoadFromPath_ValidYAML(t *testing.T) {
 
 	yamlContent := `
 sections:
-  session:
+  model:
     enabled: true
     order: 1
   beads:
@@ -166,10 +168,10 @@ debug: true
 		t.Error("Expected beads section to be disabled")
 	}
 
-	if config.Sections.Session.Enabled {
+	if config.Sections.Model.Enabled {
 		// This is expected
 	} else {
-		t.Error("Expected session section to be enabled")
+		t.Error("Expected model section to be enabled")
 	}
 
 	if config.Colors.Primary != "cyan" {
@@ -211,8 +213,8 @@ refresh_interval_ms: 1000
 	}
 
 	// Check default values are still present
-	if config.Sections.Session.Enabled != true {
-		t.Error("Expected session section to use default enabled=true")
+	if config.Sections.Model.Enabled != true {
+		t.Error("Expected model section to use default enabled=true")
 	}
 
 	if config.Colors.Primary != "#89dceb" {
@@ -268,8 +270,14 @@ func TestValidate_ColorDefaults(t *testing.T) {
 func TestNormalizeSectionOrders(t *testing.T) {
 	config := DefaultConfig()
 
+	// Disable new sections for this test to maintain expected behavior
+	config.Sections.ContextBar.Enabled = false
+	config.Sections.Duration.Enabled = false
+	config.Sections.Tools.Enabled = false
+	config.Sections.SysInfo.Enabled = false
+
 	// Set custom orders with gaps and duplicates
-	config.Sections.Session.Order = 10
+	config.Sections.Model.Order = 10
 	config.Sections.Beads.Order = 5
 	config.Sections.Status.Order = 10
 	config.Sections.Workspace.Order = 1
@@ -282,7 +290,7 @@ func TestNormalizeSectionOrders(t *testing.T) {
 		order  int
 		checkFn func() int
 	}{
-		{"session", 3, func() int { return config.Sections.Session.Order }},
+		{"model", 3, func() int { return config.Sections.Model.Order }},
 		{"beads", 2, func() int { return config.Sections.Beads.Order }},
 		{"status", 4, func() int { return config.Sections.Status.Order }},
 		{"workspace", 1, func() int { return config.Sections.Workspace.Order }},
@@ -302,7 +310,9 @@ func TestNormalizeSectionOrders(t *testing.T) {
 func TestGetEnabledSections(t *testing.T) {
 	config := DefaultConfig()
 
-	// Disable some sections
+	// Disable some sections (including new ones)
+	config.Sections.ContextBar.Enabled = false
+	config.Sections.Duration.Enabled = false
 	config.Sections.Beads.Enabled = false
 	config.Sections.Workspace.Enabled = false
 	config.Sections.Tools.Enabled = false
@@ -310,7 +320,7 @@ func TestGetEnabledSections(t *testing.T) {
 
 	enabled := config.GetEnabledSections()
 
-	expected := []string{"session", "status"}
+	expected := []string{"model", "status"}
 	if len(enabled) != len(expected) {
 		t.Fatalf("Expected %d enabled sections, got %d", len(expected), len(enabled))
 	}
@@ -325,17 +335,19 @@ func TestGetEnabledSections(t *testing.T) {
 func TestGetEnabledSections_CustomOrder(t *testing.T) {
 	config := DefaultConfig()
 
-	// Change order
-	config.Sections.Session.Order = 3
+	// Change order (include new sections)
+	config.Sections.Model.Order = 3
+	config.Sections.ContextBar.Order = 2
+	config.Sections.Duration.Order = 8
 	config.Sections.Beads.Order = 1
 	config.Sections.Status.Order = 5
-	config.Sections.Workspace.Order = 2
-	config.Sections.Tools.Order = 4
-	config.Sections.SysInfo.Order = 6
+	config.Sections.Workspace.Order = 4
+	config.Sections.Tools.Order = 6
+	config.Sections.SysInfo.Order = 7
 
 	enabled := config.GetEnabledSections()
 
-	expected := []string{"beads", "workspace", "session", "tools", "status", "sysinfo"}
+	expected := []string{"beads", "contextbar", "model", "workspace", "status", "tools", "sysinfo", "duration"}
 	if len(enabled) != len(expected) {
 		t.Fatalf("Expected %d enabled sections, got %d", len(expected), len(enabled))
 	}
@@ -354,7 +366,7 @@ func TestIsSectionEnabled(t *testing.T) {
 		section string
 		enabled bool
 	}{
-		{"session", true},
+		{"model", true},
 		{"beads", true},
 		{"status", true},
 		{"workspace", true},
@@ -387,19 +399,23 @@ func TestGetRefreshInterval(t *testing.T) {
 func TestGetSectionOrder(t *testing.T) {
 	config := DefaultConfig()
 
-	config.Sections.Session.Order = 10
-	config.Sections.Beads.Order = 20
-	config.Sections.Status.Order = 30
-	config.Sections.Workspace.Order = 40
+	config.Sections.Model.Order = 10
+	config.Sections.ContextBar.Order = 20
+	config.Sections.Duration.Order = 30
+	config.Sections.Beads.Order = 40
+	config.Sections.Status.Order = 50
+	config.Sections.Workspace.Order = 60
 
 	tests := []struct {
 		section string
 		order   int
 	}{
-		{"session", 10},
-		{"beads", 20},
-		{"status", 30},
-		{"workspace", 40},
+		{"model", 10},
+		{"contextbar", 20},
+		{"duration", 30},
+		{"beads", 40},
+		{"status", 50},
+		{"workspace", 60},
 		{"nonexistent", 999},
 	}
 
@@ -429,7 +445,7 @@ func TestToYAML(t *testing.T) {
 	// Check that it contains expected keys
 	expectedKeys := []string{
 		"sections:",
-		"session:",
+		"model:",
 		"beads:",
 		"colors:",
 		"primary:",
@@ -543,7 +559,7 @@ func TestLoadWithMissingOptionalFields(t *testing.T) {
 	// Minimal valid YAML with only some fields
 	yamlContent := `
 sections:
-  session:
+  model:
     enabled: true
     order: 1
 refresh_interval_ms: 250
@@ -574,8 +590,8 @@ refresh_interval_ms: 250
 		t.Errorf("Expected refresh interval 250, got %d", config.RefreshIntervalMs)
 	}
 
-	if !config.Sections.Session.Enabled {
-		t.Error("Expected session section to be enabled")
+	if !config.Sections.Model.Enabled {
+		t.Error("Expected model section to be enabled")
 	}
 }
 

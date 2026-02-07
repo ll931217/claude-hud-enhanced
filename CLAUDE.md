@@ -149,12 +149,19 @@ type Section interface {
 }
 ```
 
-**Session Section** (`internal/sections/session.go`):
-- Model name and context progress bar (plain text at low usage, yellow/red at high)
-- Session duration and cost estimation
-- Todo progress and tool/agent activity
+**Model Section** (`internal/sections/model.go`):
+- Model name only (e.g., "glm-4.7", "claude-opus-4-5")
+- Shortens model names (Sonnet→SN, Haiku→HK, Opus→OP)
+- Priority: Essential
+
+**ContextBar Section** (`internal/sections/contextbar.go`):
+- Context progress bar with color coding (green/yellow/red)
 - Token breakdown at high context usage (>=85%)
 - Priority: Essential
+
+**Duration Section** (`internal/sections/duration.go`):
+- Session duration in human-readable format
+- Priority: Important
 
 **Tools Section** (`internal/sections/tools.go`):
 - Recently used tools with call counts (max 5)
@@ -217,35 +224,39 @@ layout:
     medium_breakpoint: 120
     large_breakpoint: 160
   lines:
-    - sections: [session]
+    - sections: [model, contextbar, duration]
       separator: " | "
-    - sections: [workspace, status]
+    - sections: [workspace, status, beads]
       separator: " | "
-    - sections: [tools]
-      separator: " | "
-    - sections: [sysinfo]
+    - sections: [tools, sysinfo]
       separator: " | "
 
 # Section configuration
 sections:
-  session:
+  model:
     enabled: true
     order: 1
-  beads:
+  contextbar:
     enabled: true
     order: 2
-  status:
+  duration:
     enabled: true
     order: 3
-  workspace:
+  beads:
     enabled: true
     order: 4
-  tools:
+  status:
     enabled: true
     order: 5
-  sysinfo:
+  workspace:
     enabled: true
     order: 6
+  tools:
+    enabled: true
+    order: 7
+  sysinfo:
+    enabled: true
+    order: 8
 
 # Color customization (Catppuccin Mocha default)
 colors:
@@ -318,7 +329,7 @@ Sections register themselves in `init()` functions:
 
 ```go
 func init() {
-    registry.Register("session", NewSessionSection)
+    registry.Register("model", NewModelSection)
 }
 ```
 
@@ -377,12 +388,17 @@ func (b *BaseSection) Order() int {
 │   ├── git/                 # Git status detection
 │   ├── registry/            # Section registry factory
 │   ├── sections/            # Section implementations
-│   │   ├── session.go       # Session info section
+│   │   ├── model.go         # Model name section
+│   │   ├── contextbar.go    # Context progress bar section
+│   │   ├── duration.go      # Session duration section
 │   │   ├── beads.go         # Beads section
 │   │   ├── status.go        # Git status section
 │   │   ├── workspace.go     # Workspace section
 │   │   ├── tools.go         # Tools section
-│   │   └── sysinfo.go       # System info section
+│   │   ├── sysinfo.go       # System info section
+│   │   ├── base.go          # Base section with common functionality
+│   │   ├── helpers.go       # Shared helper functions
+│   │   └── init.go          # Package initialization
 │   ├── statusline/          # Statusline orchestration
 │   │   └── responsive.go    # Responsive layout engine
 │   ├── system/              # System monitoring (CPU, RAM, disk)

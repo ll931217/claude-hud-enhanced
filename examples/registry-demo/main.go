@@ -38,10 +38,10 @@ func main() {
 	// 3. Create sections with custom config (disabled section)
 	fmt.Println("3. Creating section with custom config (disabled):")
 	customCfg := &config.Config{}
-	customCfg.Sections.Session.Enabled = false
-	customCfg.Sections.Session.Order = 99
+	customCfg.Sections.Model.Enabled = false
+	customCfg.Sections.Model.Order = 99
 
-	section, err := registry.Create("session", customCfg)
+	section, err := registry.Create("model", customCfg)
 	if err != nil {
 		fmt.Printf("   ERROR: %v\n", err)
 	} else {

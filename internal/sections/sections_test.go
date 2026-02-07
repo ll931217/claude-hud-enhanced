@@ -12,7 +12,7 @@ func TestSectionRegistry(t *testing.T) {
 	t.Run("List returns all registered sections", func(t *testing.T) {
 		sections := registry.List()
 
-		expectedSections := []string{"session", "beads", "status", "workspace", "tools", "sysinfo"}
+		expectedSections := []string{"model", "contextbar", "duration", "beads", "status", "workspace", "tools", "sysinfo"}
 
 		for _, expected := range expectedSections {
 			found := false
@@ -30,7 +30,7 @@ func TestSectionRegistry(t *testing.T) {
 
 	// Test creating sections
 	t.Run("Create returns valid sections", func(t *testing.T) {
-		testCases := []string{"session", "beads", "status", "workspace", "tools", "sysinfo"}
+		testCases := []string{"model", "contextbar", "duration", "beads", "status", "workspace", "tools", "sysinfo"}
 
 		for _, sectionType := range testCases {
 			section, err := registry.Create(sectionType, nil)
@@ -48,15 +48,18 @@ func TestSectionRegistry(t *testing.T) {
 				t.Errorf("Expected section %q to be enabled by default", sectionType)
 			}
 
-			// Order should be set by default config (1, 2, 3, 4, 5, or 6)
-			if section.Order() < 1 || section.Order() > 6 {
-				t.Errorf("Expected section %q to have order between 1-6, got %d", sectionType, section.Order())
+			// Order should be set by default config (1-8)
+			if section.Order() < 1 || section.Order() > 8 {
+				t.Errorf("Expected section %q to have order between 1-8, got %d", sectionType, section.Order())
 			}
 
-			// Note: 'tools' and 'sysinfo' sections may return empty strings in test environment
-			// (no transcript file for tools, monitor may fail to update in test)
+			// Note: Some sections may return empty strings in test environment
+			// - model: needs statusline context with model name
+			// - contextbar, duration: needs transcript file
+			// - tools: needs transcript file for tool activity
+			// - sysinfo: monitor may fail to update in test
 			rendered := section.Render()
-			allowEmpty := (sectionType == "tools" || sectionType == "sysinfo")
+			allowEmpty := (sectionType == "model" || sectionType == "tools" || sectionType == "sysinfo" || sectionType == "contextbar" || sectionType == "duration")
 			if rendered == "" && !allowEmpty {
 				t.Errorf("Expected section %q to render non-empty string", sectionType)
 			}
@@ -66,10 +69,10 @@ func TestSectionRegistry(t *testing.T) {
 	// Test configuration-based enable/disable
 	t.Run("Create respects config.Enabled", func(t *testing.T) {
 		cfg := &config.Config{}
-		cfg.Sections.Session.Enabled = false
-		cfg.Sections.Session.Order = 5
+		cfg.Sections.Model.Enabled = false
+		cfg.Sections.Model.Order = 5
 
-		section, err := registry.Create("session", cfg)
+		section, err := registry.Create("model", cfg)
 		if err != nil {
 			t.Fatalf("Failed to create section: %v", err)
 		}

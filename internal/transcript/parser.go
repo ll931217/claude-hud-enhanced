@@ -545,7 +545,7 @@ func (p *Parser) GetDuration() string {
 	// Format duration in human-readable format
 	switch {
 	case duration < time.Minute:
-		return duration.String()
+		return fmt.Sprintf("%ds", int(duration.Seconds()))
 	case duration < time.Hour:
 		return fmt.Sprintf("%dm", int(duration.Minutes()))
 	case duration < 24*time.Hour:

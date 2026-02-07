@@ -24,12 +24,14 @@ type Config struct {
 
 // SectionsConfig holds configuration for all HUD sections
 type SectionsConfig struct {
-	Session   SectionConfig `yaml:"session"`
-	Beads     SectionConfig `yaml:"beads"`
-	Status    SectionConfig `yaml:"status"`
-	Workspace SectionConfig `yaml:"workspace"`
-	Tools     SectionConfig `yaml:"tools"`
-	SysInfo   SectionConfig `yaml:"sysinfo"`
+	Model      SectionConfig `yaml:"model"`
+	ContextBar SectionConfig `yaml:"contextbar"`
+	Duration   SectionConfig `yaml:"duration"`
+	Beads      SectionConfig `yaml:"beads"`
+	Status     SectionConfig `yaml:"status"`
+	Workspace  SectionConfig `yaml:"workspace"`
+	Tools      SectionConfig `yaml:"tools"`
+	SysInfo    SectionConfig `yaml:"sysinfo"`
 }
 
 // SectionConfig represents configuration for a single section
@@ -78,29 +80,37 @@ func defaultConfig() *Config {
 
 	return &Config{
 		Sections: SectionsConfig{
-			Session: SectionConfig{
+			Model: SectionConfig{
 				Enabled: true,
 				Order:   1,
 			},
-			Beads: SectionConfig{
+			ContextBar: SectionConfig{
 				Enabled: true,
 				Order:   2,
 			},
-			Status: SectionConfig{
+			Duration: SectionConfig{
 				Enabled: true,
 				Order:   3,
 			},
-			Workspace: SectionConfig{
+			Beads: SectionConfig{
 				Enabled: true,
 				Order:   4,
 			},
-			Tools: SectionConfig{
+			Status: SectionConfig{
 				Enabled: true,
 				Order:   5,
 			},
-			SysInfo: SectionConfig{
+			Workspace: SectionConfig{
 				Enabled: true,
 				Order:   6,
+			},
+			Tools: SectionConfig{
+				Enabled: true,
+				Order:   7,
+			},
+			SysInfo: SectionConfig{
+				Enabled: true,
+				Order:   8,
 			},
 		},
 		Colors: ColorsConfig{
@@ -241,10 +251,14 @@ func (c *Config) normalizeSectionOrders() {
 		name   string
 		config *SectionConfig
 	}{
-		{"session", &c.Sections.Session},
+		{"model", &c.Sections.Model},
+		{"contextbar", &c.Sections.ContextBar},
+		{"duration", &c.Sections.Duration},
 		{"beads", &c.Sections.Beads},
 		{"status", &c.Sections.Status},
 		{"workspace", &c.Sections.Workspace},
+		{"tools", &c.Sections.Tools},
+		{"sysinfo", &c.Sections.SysInfo},
 	}
 
 	// Collect enabled sections with their orders
@@ -271,14 +285,22 @@ func (c *Config) normalizeSectionOrders() {
 	// Reassign orders starting from 1
 	for i, es := range enabledSections {
 		switch es.name {
-		case "session":
-			c.Sections.Session.Order = i + 1
+		case "model":
+			c.Sections.Model.Order = i + 1
+		case "contextbar":
+			c.Sections.ContextBar.Order = i + 1
+		case "duration":
+			c.Sections.Duration.Order = i + 1
 		case "beads":
 			c.Sections.Beads.Order = i + 1
 		case "status":
 			c.Sections.Status.Order = i + 1
 		case "workspace":
 			c.Sections.Workspace.Order = i + 1
+		case "tools":
+			c.Sections.Tools.Order = i + 1
+		case "sysinfo":
+			c.Sections.SysInfo.Order = i + 1
 		}
 	}
 }
@@ -292,8 +314,14 @@ func (c *Config) GetEnabledSections() []string {
 
 	var sections []sectionOrder
 
-	if c.Sections.Session.Enabled {
-		sections = append(sections, sectionOrder{"session", c.Sections.Session.Order})
+	if c.Sections.Model.Enabled {
+		sections = append(sections, sectionOrder{"model", c.Sections.Model.Order})
+	}
+	if c.Sections.ContextBar.Enabled {
+		sections = append(sections, sectionOrder{"contextbar", c.Sections.ContextBar.Order})
+	}
+	if c.Sections.Duration.Enabled {
+		sections = append(sections, sectionOrder{"duration", c.Sections.Duration.Order})
 	}
 	if c.Sections.Beads.Enabled {
 		sections = append(sections, sectionOrder{"beads", c.Sections.Beads.Order})
@@ -326,8 +354,12 @@ func (c *Config) GetEnabledSections() []string {
 // IsSectionEnabled checks if a specific section is enabled
 func (c *Config) IsSectionEnabled(sectionName string) bool {
 	switch sectionName {
-	case "session":
-		return c.Sections.Session.Enabled
+	case "model":
+		return c.Sections.Model.Enabled
+	case "contextbar":
+		return c.Sections.ContextBar.Enabled
+	case "duration":
+		return c.Sections.Duration.Enabled
 	case "beads":
 		return c.Sections.Beads.Enabled
 	case "status":
@@ -388,8 +420,12 @@ func (c *Config) ToYAML() (string, error) {
 // GetSectionOrder returns the order for a specific section
 func (c *Config) GetSectionOrder(sectionName string) int {
 	switch sectionName {
-	case "session":
-		return c.Sections.Session.Order
+	case "model":
+		return c.Sections.Model.Order
+	case "contextbar":
+		return c.Sections.ContextBar.Order
+	case "duration":
+		return c.Sections.Duration.Order
 	case "beads":
 		return c.Sections.Beads.Order
 	case "status":
@@ -405,24 +441,20 @@ func (c *Config) GetSectionOrder(sectionName string) int {
 	}
 }
 
-// DefaultLayout returns the default 4-line layout configuration
+// DefaultLayout returns the default 3-line layout configuration
 func DefaultLayout() LayoutConfig {
 	return LayoutConfig{
 		Lines: []LineConfig{
 			{
-				Sections:  []string{"session"},
+				Sections:  []string{"model", "contextbar", "duration"},
 				Separator: " | ",
 			},
 			{
-				Sections:  []string{"workspace", "status"},
+				Sections:  []string{"workspace", "status", "beads"},
 				Separator: " | ",
 			},
 			{
-				Sections:  []string{"tools"},
-				Separator: " | ",
-			},
-			{
-				Sections:  []string{"sysinfo"},
+				Sections:  []string{"tools", "sysinfo"},
 				Separator: " | ",
 			},
 		},

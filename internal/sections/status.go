@@ -30,6 +30,10 @@ func NewStatusSection(cfg interface{}) (registry.Section, error) {
 	}, nil
 }
 
+func init() {
+	registry.Register("status", NewStatusSection)
+}
+
 // Render returns the status section output
 func (s *StatusSection) Render() string {
 	ctx, cancel := context.WithTimeout(context.Background(), 100*time.Millisecond)

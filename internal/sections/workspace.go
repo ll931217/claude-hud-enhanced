@@ -27,6 +27,10 @@ func NewWorkspaceSection(cfg interface{}) (registry.Section, error) {
 	}, nil
 }
 
+func init() {
+	registry.Register("workspace", NewWorkspaceSection)
+}
+
 // Render returns the workspace section output
 func (w *WorkspaceSection) Render() string {
 	// Update monitor for language detection and directory

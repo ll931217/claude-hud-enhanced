@@ -8,18 +8,30 @@ import (
 // TestConfigMatchesSpecification verifies the config structure matches the exact YAML spec
 func TestConfigMatchesSpecification(t *testing.T) {
 	yamlContent := `sections:
-  session:
+  model:
     enabled: true
     order: 1
-  beads:
+  contextbar:
     enabled: true
     order: 2
-  status:
+  duration:
     enabled: true
     order: 3
-  workspace:
+  beads:
     enabled: true
     order: 4
+  status:
+    enabled: true
+    order: 5
+  workspace:
+    enabled: true
+    order: 6
+  tools:
+    enabled: true
+    order: 7
+  sysinfo:
+    enabled: true
+    order: 8
 colors:
   primary: "blue"
   secondary: "green"
@@ -53,8 +65,8 @@ debug: false
 
 	// Verify sections
 	sections := cfg.GetEnabledSections()
-	if len(sections) != 6 {
-		t.Errorf("Expected 6 enabled sections, got %d", len(sections))
+	if len(sections) != 8 {
+		t.Errorf("Expected 8 enabled sections, got %d", len(sections))
 	}
 
 	// Verify colors

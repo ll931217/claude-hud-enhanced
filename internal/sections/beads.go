@@ -38,6 +38,10 @@ func NewBeadsSection(cfg interface{}) (registry.Section, error) {
 	}, nil
 }
 
+func init() {
+	registry.Register("beads", NewBeadsSection)
+}
+
 // Render returns the beads section output
 func (b *BeadsSection) Render() string {
 	ctx, cancel := context.WithTimeout(context.Background(), 100*time.Millisecond)
