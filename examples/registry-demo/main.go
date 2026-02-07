@@ -35,11 +35,11 @@ func main() {
 	}
 	fmt.Println()
 
-	// 3. Create sections with custom config (disabled section)
-	fmt.Println("3. Creating section with custom config (disabled):")
+	// 3. Create sections with custom config (section not in layout = disabled)
+	fmt.Println("3. Creating section with custom config (not in layout = disabled):")
 	customCfg := &config.Config{}
-	customCfg.Sections.Model.Enabled = false
-	customCfg.Sections.Model.Order = 99
+	// Empty layout means "model" section won't be enabled
+	customCfg.Layout.Lines = []config.LineConfig{}
 
 	section, err := registry.Create("model", customCfg)
 	if err != nil {

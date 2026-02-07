@@ -38,16 +38,28 @@ func NewToolsSection(cfg interface{}) (registry.Section, error) {
 
 // Render returns the tools section output
 func (t *ToolsSection) Render() string {
+	// Get transcript path dynamically from global context
+	transcriptPath := getTranscriptPath()
+	if transcriptPath == "" {
+		return "" // Hide section if no transcript path
+	}
+
+	// Create a parser for the current transcript path
+	// (path may change between renders)
+	parser := transcript.NewParser(transcriptPath)
+
 	// Parse transcript for tool data
 	ctx, cancel := context.WithTimeout(context.Background(), 100*time.Millisecond)
 	defer cancel()
 
-	_ = t.parser.Parse(ctx)
+	if err := parser.Parse(ctx); err != nil {
+		return "" // Hide section on parse error
+	}
 
 	// Get tools by recency (max 5)
-	tools := t.parser.GetToolsByRecency(5)
+	tools := parser.GetToolsByRecency(5)
 	if len(tools) == 0 {
-		return ""
+		return "" // Hide section when no tools used yet
 	}
 
 	var parts []string
@@ -59,8 +71,56 @@ func (t *ToolsSection) Render() string {
 	return strings.Join(parts, " | ")
 }
 
+// mapToOfficialToolName converts internal tool names to official display names
+func mapToOfficialToolName(name string) string {
+	// Define mapping of internal names to official names
+	officialNames := map[string]string{
+		// Core tools (capitalize)
+		"read":    "Read",
+		"edit":    "Edit",
+		"write":   "Write",
+		"bash":    "Bash",
+		"glob":    "Glob",
+		"grep":    "Grep",
+
+		// Task-related tools
+		"question":         "AskUserQuestion",
+		"todowrite":        "TaskCreate",
+		"taskupdate":       "TaskUpdate",
+		"taskget":          "TaskGet",
+		"tasklist":         "TaskList",
+		"taskoutput":       "TaskOutput",
+		"delegate_task":    "Task",
+		"background_output": "TaskOutput",
+
+		// Other tools
+		"skill":        "Skill",
+		"webfetch":     "WebFetch",
+		"websearch":    "WebSearch",
+		"notebookedit": "NotebookEdit",
+		"killshell":    "KillShell",
+		"exitplanmode": "ExitPlanMode",
+		"mcpsearch":    "MCPSearch",
+		"lspservice":   "LSP",
+	}
+
+	// Check for exact match first
+	if official, ok := officialNames[name]; ok {
+		return official
+	}
+
+	// Fallback: capitalize first letter if no mapping found
+	if name == "" {
+		return name
+	}
+	return strings.ToUpper(name[:1]) + name[1:]
+}
+
 // shortenToolName shortens verbose tool names for display
 func shortenToolName(name string) string {
+	// First, map internal name to official name
+	name = mapToOfficialToolName(name)
+
 	// Shorten MCP plugin prefixes
 	// mcp__plugin_playwright_playwright__browser_click → browser_click
 	// mcp__morph__edit_file → edit_file

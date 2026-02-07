@@ -24,30 +24,16 @@ func TestDefaultConfig(t *testing.T) {
 		t.Error("Expected debug mode to be false by default")
 	}
 
-	tests := []struct {
-		name     string
-		enabled  bool
-		order    int
-		checkFn  func() (bool, int)
-	}{
-		{"model", true, 1, func() (bool, int) { return config.Sections.Model.Enabled, config.Sections.Model.Order }},
-		{"contextbar", true, 2, func() (bool, int) { return config.Sections.ContextBar.Enabled, config.Sections.ContextBar.Order }},
-		{"duration", true, 3, func() (bool, int) { return config.Sections.Duration.Enabled, config.Sections.Duration.Order }},
-		{"beads", true, 4, func() (bool, int) { return config.Sections.Beads.Enabled, config.Sections.Beads.Order }},
-		{"status", true, 5, func() (bool, int) { return config.Sections.Status.Enabled, config.Sections.Status.Order }},
-		{"workspace", true, 6, func() (bool, int) { return config.Sections.Workspace.Enabled, config.Sections.Workspace.Order }},
+	// Check layout is configured
+	if len(config.Layout.Lines) == 0 {
+		t.Error("Expected default layout to have lines configured")
 	}
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			enabled, order := tt.checkFn()
-			if enabled != tt.enabled {
-				t.Errorf("Expected %s enabled=%v, got %v", tt.name, tt.enabled, enabled)
-			}
-			if order != tt.order {
-				t.Errorf("Expected %s order=%d, got %d", tt.name, tt.order, order)
-			}
-		})
+	// Check layout has expected sections in first line
+	firstLine := config.Layout.Lines[0]
+	expectedFirstLineSections := []string{"model", "contextbar", "duration"}
+	if len(firstLine.Sections) != len(expectedFirstLineSections) {
+		t.Errorf("Expected first line to have %d sections, got %d", len(expectedFirstLineSections), len(firstLine.Sections))
 	}
 
 	// Check colors - Catppuccin Mocha theme
@@ -119,19 +105,12 @@ func TestLoadFromPath_ValidYAML(t *testing.T) {
 	configPath := filepath.Join(tmpDir, "valid.yaml")
 
 	yamlContent := `
-sections:
-  model:
-    enabled: true
-    order: 1
-  beads:
-    enabled: false
-    order: 2
-  status:
-    enabled: true
-    order: 3
-  workspace:
-    enabled: false
-    order: 4
+layout:
+  lines:
+    - sections: [model, status]
+      separator: " | "
+    - sections: [workspace]
+      separator: " | "
 colors:
   primary: "cyan"
   secondary: "magenta"
@@ -164,14 +143,19 @@ debug: true
 		t.Error("Expected debug mode to be true")
 	}
 
-	if config.Sections.Beads.Enabled {
-		t.Error("Expected beads section to be disabled")
+	// Check layout was loaded correctly
+	if len(config.Layout.Lines) != 2 {
+		t.Errorf("Expected 2 layout lines, got %d", len(config.Layout.Lines))
 	}
 
-	if config.Sections.Model.Enabled {
-		// This is expected
-	} else {
-		t.Error("Expected model section to be enabled")
+	// Check beads is NOT enabled (not in layout)
+	if config.IsSectionEnabled("beads") {
+		t.Error("Expected beads section to be disabled (not in layout)")
+	}
+
+	// Check model IS enabled (in layout)
+	if !config.IsSectionEnabled("model") {
+		t.Error("Expected model section to be enabled (in layout)")
 	}
 
 	if config.Colors.Primary != "cyan" {
@@ -185,10 +169,10 @@ func TestLoadFromPath_PartialConfig(t *testing.T) {
 
 	// Write partial YAML - only override some values
 	yamlContent := `
-sections:
-  beads:
-    enabled: false
-    order: 2
+layout:
+  lines:
+    - sections: [model]
+      separator: " | "
 refresh_interval_ms: 1000
 `
 
@@ -208,15 +192,16 @@ refresh_interval_ms: 1000
 		t.Errorf("Expected refresh interval 1000, got %d", config.RefreshIntervalMs)
 	}
 
-	if config.Sections.Beads.Enabled {
-		t.Error("Expected beads section to be disabled")
+	// Check only "model" is enabled (from custom layout)
+	if !config.IsSectionEnabled("model") {
+		t.Error("Expected model section to be enabled (in layout)")
 	}
 
-	// Check default values are still present
-	if config.Sections.Model.Enabled != true {
-		t.Error("Expected model section to use default enabled=true")
+	if config.IsSectionEnabled("beads") {
+		t.Error("Expected beads section to be disabled (not in layout)")
 	}
 
+	// Check default values are still present for colors
 	if config.Colors.Primary != "#89dceb" {
 		t.Errorf("Expected default primary color '#89dceb', got '%s'", config.Colors.Primary)
 	}
@@ -267,60 +252,42 @@ func TestValidate_ColorDefaults(t *testing.T) {
 	}
 }
 
-func TestNormalizeSectionOrders(t *testing.T) {
+func TestGetEnabledSections_FromLayout(t *testing.T) {
 	config := DefaultConfig()
 
-	// Disable new sections for this test to maintain expected behavior
-	config.Sections.ContextBar.Enabled = false
-	config.Sections.Duration.Enabled = false
-	config.Sections.Tools.Enabled = false
-	config.Sections.SysInfo.Enabled = false
+	// Default layout has all sections
+	enabled := config.GetEnabledSections()
 
-	// Set custom orders with gaps and duplicates
-	config.Sections.Model.Order = 10
-	config.Sections.Beads.Order = 5
-	config.Sections.Status.Order = 10
-	config.Sections.Workspace.Order = 1
-
-	config.normalizeSectionOrders()
-
-	// Check orders are normalized starting from 1
-	orders := []struct {
-		name   string
-		order  int
-		checkFn func() int
-	}{
-		{"model", 3, func() int { return config.Sections.Model.Order }},
-		{"beads", 2, func() int { return config.Sections.Beads.Order }},
-		{"status", 4, func() int { return config.Sections.Status.Order }},
-		{"workspace", 1, func() int { return config.Sections.Workspace.Order }},
+	// Check that we get all expected sections from default layout
+	expectedCount := 8 // model, contextbar, duration, beads, status, workspace, tools, sysinfo
+	if len(enabled) != expectedCount {
+		t.Fatalf("Expected %d enabled sections from default layout, got %d", expectedCount, len(enabled))
 	}
 
-	for _, tt := range orders {
-		t.Run(tt.name, func(t *testing.T) {
-			order := tt.checkFn()
-			if order != tt.order {
-				t.Errorf("Expected %s order=%d after normalization, got %d",
-					tt.name, tt.order, order)
-			}
-		})
+	// Check specific sections are present
+	sectionMap := make(map[string]bool)
+	for _, s := range enabled {
+		sectionMap[s] = true
+	}
+
+	expectedSections := []string{"model", "contextbar", "duration", "beads", "status", "workspace", "tools", "sysinfo"}
+	for _, s := range expectedSections {
+		if !sectionMap[s] {
+			t.Errorf("Expected section '%s' to be in enabled list", s)
+		}
 	}
 }
 
-func TestGetEnabledSections(t *testing.T) {
+func TestGetEnabledSections_CustomLayout(t *testing.T) {
 	config := DefaultConfig()
-
-	// Disable some sections (including new ones)
-	config.Sections.ContextBar.Enabled = false
-	config.Sections.Duration.Enabled = false
-	config.Sections.Beads.Enabled = false
-	config.Sections.Workspace.Enabled = false
-	config.Sections.Tools.Enabled = false
-	config.Sections.SysInfo.Enabled = false
+	config.Layout.Lines = []LineConfig{
+		{Sections: []string{"beads", "status"}, Separator: " | "},
+		{Sections: []string{"model"}, Separator: " | "},
+	}
 
 	enabled := config.GetEnabledSections()
 
-	expected := []string{"model", "status"}
+	expected := []string{"beads", "status", "model"}
 	if len(enabled) != len(expected) {
 		t.Fatalf("Expected %d enabled sections, got %d", len(expected), len(enabled))
 	}
@@ -332,30 +299,16 @@ func TestGetEnabledSections(t *testing.T) {
 	}
 }
 
-func TestGetEnabledSections_CustomOrder(t *testing.T) {
+func TestGetEnabledSections_EmptyLayout(t *testing.T) {
 	config := DefaultConfig()
+	config.Layout.Lines = []LineConfig{}
 
-	// Change order (include new sections)
-	config.Sections.Model.Order = 3
-	config.Sections.ContextBar.Order = 2
-	config.Sections.Duration.Order = 8
-	config.Sections.Beads.Order = 1
-	config.Sections.Status.Order = 5
-	config.Sections.Workspace.Order = 4
-	config.Sections.Tools.Order = 6
-	config.Sections.SysInfo.Order = 7
-
+	// Empty layout should return all enabled sections in default order
 	enabled := config.GetEnabledSections()
 
-	expected := []string{"beads", "contextbar", "model", "workspace", "status", "tools", "sysinfo", "duration"}
-	if len(enabled) != len(expected) {
-		t.Fatalf("Expected %d enabled sections, got %d", len(expected), len(enabled))
-	}
-
-	for i, section := range enabled {
-		if section != expected[i] {
-			t.Errorf("Expected section %d to be '%s', got '%s'", i, expected[i], section)
-		}
+	// All sections should be enabled when layout is empty
+	if len(enabled) != 8 {
+		t.Fatalf("Expected 8 enabled sections with empty layout, got %d", len(enabled))
 	}
 }
 
@@ -367,9 +320,12 @@ func TestIsSectionEnabled(t *testing.T) {
 		enabled bool
 	}{
 		{"model", true},
+		{"contextbar", true},
 		{"beads", true},
 		{"status", true},
 		{"workspace", true},
+		{"tools", true},
+		{"sysinfo", true},
 		{"nonexistent", false},
 	}
 
@@ -381,6 +337,39 @@ func TestIsSectionEnabled(t *testing.T) {
 					tt.section, tt.enabled, result)
 			}
 		})
+	}
+}
+
+func TestIsSectionEnabled_EmptyLayout(t *testing.T) {
+	config := DefaultConfig()
+	config.Layout.Lines = []LineConfig{}
+
+	// Empty layout means all sections are enabled
+	if !config.IsSectionEnabled("model") {
+		t.Error("Expected model to be enabled with empty layout")
+	}
+
+	if !config.IsSectionEnabled("beads") {
+		t.Error("Expected beads to be enabled with empty layout")
+	}
+}
+
+func TestIsSectionEnabled_CustomLayout(t *testing.T) {
+	config := DefaultConfig()
+	config.Layout.Lines = []LineConfig{
+		{Sections: []string{"model", "status"}, Separator: " | "},
+	}
+
+	if !config.IsSectionEnabled("model") {
+		t.Error("Expected model to be enabled (in layout)")
+	}
+
+	if !config.IsSectionEnabled("status") {
+		t.Error("Expected status to be enabled (in layout)")
+	}
+
+	if config.IsSectionEnabled("beads") {
+		t.Error("Expected beads to be disabled (not in layout)")
 	}
 }
 
@@ -396,40 +385,6 @@ func TestGetRefreshInterval(t *testing.T) {
 	}
 }
 
-func TestGetSectionOrder(t *testing.T) {
-	config := DefaultConfig()
-
-	config.Sections.Model.Order = 10
-	config.Sections.ContextBar.Order = 20
-	config.Sections.Duration.Order = 30
-	config.Sections.Beads.Order = 40
-	config.Sections.Status.Order = 50
-	config.Sections.Workspace.Order = 60
-
-	tests := []struct {
-		section string
-		order   int
-	}{
-		{"model", 10},
-		{"contextbar", 20},
-		{"duration", 30},
-		{"beads", 40},
-		{"status", 50},
-		{"workspace", 60},
-		{"nonexistent", 999},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.section, func(t *testing.T) {
-			result := config.GetSectionOrder(tt.section)
-			if result != tt.order {
-				t.Errorf("Expected GetSectionOrder(%s)=%d, got %d",
-					tt.section, tt.order, result)
-			}
-		})
-	}
-}
-
 func TestToYAML(t *testing.T) {
 	config := DefaultConfig()
 
@@ -442,11 +397,11 @@ func TestToYAML(t *testing.T) {
 		t.Error("ToYAML returned empty string")
 	}
 
-	// Check that it contains expected keys
+	// Check that it contains expected keys (NOT sections anymore)
 	expectedKeys := []string{
+		"layout:",
+		"lines:",
 		"sections:",
-		"model:",
-		"beads:",
 		"colors:",
 		"primary:",
 		"refresh_interval_ms:",
@@ -456,6 +411,11 @@ func TestToYAML(t *testing.T) {
 		if !contains(yaml, key) {
 			t.Errorf("Expected YAML to contain '%s'", key)
 		}
+	}
+
+	// Should NOT contain the old "sections:" top-level key with "model:" sub-key
+	if contains(yaml, "sections:\n  model:") {
+		t.Error("YAML should not contain old 'sections: model:' structure")
 	}
 }
 
@@ -558,10 +518,10 @@ func TestLoadWithMissingOptionalFields(t *testing.T) {
 
 	// Minimal valid YAML with only some fields
 	yamlContent := `
-sections:
-  model:
-    enabled: true
-    order: 1
+layout:
+  lines:
+    - sections: [model]
+      separator: " | "
 refresh_interval_ms: 250
 `
 
@@ -590,8 +550,9 @@ refresh_interval_ms: 250
 		t.Errorf("Expected refresh interval 250, got %d", config.RefreshIntervalMs)
 	}
 
-	if !config.Sections.Model.Enabled {
-		t.Error("Expected model section to be enabled")
+	// Check model is enabled (in layout)
+	if !config.IsSectionEnabled("model") {
+		t.Error("Expected model section to be enabled (in layout)")
 	}
 }
 

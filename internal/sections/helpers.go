@@ -2,6 +2,7 @@ package sections
 
 import (
 	"os"
+	"path/filepath"
 
 	"github.com/ll931217/claude-hud-enhanced/internal/statusline"
 )
@@ -18,7 +19,21 @@ func getTranscriptPath() string {
 		return path
 	}
 
-	// For standalone mode, try to find the latest transcript in cwd
-	// Look for .claude/transcript.json or similar
+	// For standalone mode, try to find transcript in common locations
+	locations := []string{
+		".claude/transcript.jsonl",
+		".claude/transcript.json",
+		"transcript.jsonl",
+		"transcript.json",
+	}
+
+	for _, loc := range locations {
+		if path, err := filepath.Abs(loc); err == nil {
+			if _, err := os.Stat(path); err == nil {
+				return path
+			}
+		}
+	}
+
 	return ""
 }

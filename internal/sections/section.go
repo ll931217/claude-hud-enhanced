@@ -32,6 +32,7 @@ type BaseSection struct {
 }
 
 // NewBaseSection creates a new base section
+// Order is set to a default value (999) since actual ordering is determined by layout
 func NewBaseSection(name string, cfg *config.Config) *BaseSection {
 	if cfg == nil {
 		cfg = config.DefaultConfig()
@@ -39,7 +40,7 @@ func NewBaseSection(name string, cfg *config.Config) *BaseSection {
 	return &BaseSection{
 		name:    name,
 		enabled: cfg.IsSectionEnabled(name),
-		order:   cfg.GetSectionOrder(name),
+		order:   999, // Default order - actual ordering determined by layout
 		config:  cfg,
 	}
 }

@@ -183,38 +183,64 @@ func (p *Parser) parseLine(line []byte) error {
 
 	case EventTypeToolUse:
 		var tool struct {
-			Type      string   `json:"type"`
-			Timestamp string   `json:"timestamp,omitempty"`
-			ToolUse   ToolInfo `json:"tool_use"`
+			Type      string `json:"type"`
+			Timestamp string `json:"timestamp,omitempty"`
+			ToolName  string `json:"tool_name"`
 		}
 		if err := json.Unmarshal(line, &tool); err != nil {
 			return err
 		}
 		event.Timestamp = tool.Timestamp
-		event.ToolUse = &tool.ToolUse
 
 		// Track tool activity with timestamp
-		if tool.ToolUse.ToolUseID != "" {
-			// Parse timestamp for recency tracking
+		if tool.ToolName != "" {
+			// Create ToolInfo for tracking
+			toolInfo := &ToolInfo{
+				Name: tool.ToolName,
+			}
 			if tool.Timestamp != "" {
 				if t, err := time.Parse(time.RFC3339Nano, tool.Timestamp); err == nil {
-					tool.ToolUse.LastUsed = t
+					toolInfo.LastUsed = t
 				}
 			}
-			p.toolActivity[tool.ToolUse.ToolUseID] = &tool.ToolUse
+
+			// Use a unique key for this tool use
+			key := tool.ToolName + "_" + tool.Timestamp
+			p.toolActivity[key] = toolInfo
+
+			// Also set event.ToolUse for compatibility
+			event.ToolUse = toolInfo
 		}
 
 	case EventTypeToolResult:
 		var result struct {
-			Type        string     `json:"type"`
-			Timestamp   string     `json:"timestamp,omitempty"`
-			ToolResult  ToolResult `json:"tool_result"`
+			Type      string `json:"type"`
+			Timestamp string `json:"timestamp,omitempty"`
+			ToolName  string `json:"tool_name"`
 		}
 		if err := json.Unmarshal(line, &result); err != nil {
 			return err
 		}
 		event.Timestamp = result.Timestamp
-		event.ToolResult = &result.ToolResult
+
+		// Also track tool use from results
+		if result.ToolName != "" {
+			toolInfo := &ToolInfo{
+				Name: result.ToolName,
+			}
+			if result.Timestamp != "" {
+				if t, err := time.Parse(time.RFC3339Nano, result.Timestamp); err == nil {
+					toolInfo.LastUsed = t
+				}
+			}
+			key := result.ToolName + "_" + result.Timestamp
+			p.toolActivity[key] = toolInfo
+
+			// Set event.ToolResult for compatibility
+			event.ToolResult = &ToolResult{
+				ToolUseID: key,
+			}
+		}
 
 	case EventTypeAgentRun:
 		var agent struct {
@@ -609,4 +635,11 @@ func (p *Parser) GetToolsByRecency(maxTools int) []ToolUsage {
 	}
 
 	return result
+}
+
+// GetTranscriptPath returns the transcript path for this parser
+func (p *Parser) GetTranscriptPath() string {
+	p.mu.RLock()
+	defer p.mu.RUnlock()
+	return p.transcriptPath
 }

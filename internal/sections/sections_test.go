@@ -66,11 +66,11 @@ func TestSectionRegistry(t *testing.T) {
 		}
 	})
 
-	// Test configuration-based enable/disable
-	t.Run("Create respects config.Enabled", func(t *testing.T) {
+	// Test configuration-based enable/disable (layout-based)
+	t.Run("Create respects layout (not in layout = disabled)", func(t *testing.T) {
 		cfg := &config.Config{}
-		cfg.Sections.Model.Enabled = false
-		cfg.Sections.Model.Order = 5
+		// Empty layout means no sections are enabled
+		cfg.Layout.Lines = []config.LineConfig{}
 
 		section, err := registry.Create("model", cfg)
 		if err != nil {
@@ -78,11 +78,12 @@ func TestSectionRegistry(t *testing.T) {
 		}
 
 		if section.Enabled() {
-			t.Error("Expected section to be disabled when config.Enabled is false")
+			t.Error("Expected section to be disabled when not in layout")
 		}
 
-		if section.Order() != 5 {
-			t.Errorf("Expected order 5, got %d", section.Order())
+		// Order is always 999 with new layout-based system
+		if section.Order() != 999 {
+			t.Errorf("Expected order 999 (default), got %d", section.Order())
 		}
 	})
 

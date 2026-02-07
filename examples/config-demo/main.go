@@ -43,7 +43,7 @@ func main() {
 	customConfig := config.DefaultConfig()
 	customConfig.RefreshIntervalMs = 500
 	customConfig.Debug = true
-	customConfig.Sections.Beads.Enabled = false
+	// Remove "beads" section from all layout lines to disable it
 	customConfig.Colors.Primary = "magenta"
 
 	// Save to temp location for demo

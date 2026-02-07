@@ -592,7 +592,7 @@ func getLanguageIcon(lang string) string {
 		"Go":         "🐹",
 		"Python":     "🐍",
 		"Rust":       "🦀",
-		"JavaScript": "🟨",
+		"JavaScript": "⚡",
 		"TypeScript": "💎",
 		"Java":       "☕",
 		"Ruby":       "💎",

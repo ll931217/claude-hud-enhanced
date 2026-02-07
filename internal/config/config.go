@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"sort"
 	"time"
 
 	"github.com/ll931217/claude-hud-enhanced/internal/theme"
@@ -13,31 +12,12 @@ import (
 
 // Config represents the application configuration
 type Config struct {
-	Sections         SectionsConfig `yaml:"sections"`
 	Colors           ColorsConfig   `yaml:"colors"`
 	Layout           LayoutConfig   `yaml:"layout"`
 	RefreshIntervalMs int            `yaml:"refresh_interval_ms"`
 	Debug            bool           `yaml:"debug"`
 	CompactMode      bool           `yaml:"compact_mode"`
 	MaxLines         int            `yaml:"max_lines"`
-}
-
-// SectionsConfig holds configuration for all HUD sections
-type SectionsConfig struct {
-	Model      SectionConfig `yaml:"model"`
-	ContextBar SectionConfig `yaml:"contextbar"`
-	Duration   SectionConfig `yaml:"duration"`
-	Beads      SectionConfig `yaml:"beads"`
-	Status     SectionConfig `yaml:"status"`
-	Workspace  SectionConfig `yaml:"workspace"`
-	Tools      SectionConfig `yaml:"tools"`
-	SysInfo    SectionConfig `yaml:"sysinfo"`
-}
-
-// SectionConfig represents configuration for a single section
-type SectionConfig struct {
-	Enabled bool `yaml:"enabled"`
-	Order   int  `yaml:"order"`
 }
 
 // ColorsConfig holds color customization options
@@ -79,40 +59,7 @@ func defaultConfig() *Config {
 	ct := theme.CatppuccinMocha()
 
 	return &Config{
-		Sections: SectionsConfig{
-			Model: SectionConfig{
-				Enabled: true,
-				Order:   1,
-			},
-			ContextBar: SectionConfig{
-				Enabled: true,
-				Order:   2,
-			},
-			Duration: SectionConfig{
-				Enabled: true,
-				Order:   3,
-			},
-			Beads: SectionConfig{
-				Enabled: true,
-				Order:   4,
-			},
-			Status: SectionConfig{
-				Enabled: true,
-				Order:   5,
-			},
-			Workspace: SectionConfig{
-				Enabled: true,
-				Order:   6,
-			},
-			Tools: SectionConfig{
-				Enabled: true,
-				Order:   7,
-			},
-			SysInfo: SectionConfig{
-				Enabled: true,
-				Order:   8,
-			},
-		},
+		Layout: DefaultLayout(),
 		Colors: ColorsConfig{
 			Primary:   ct.Primary,
 			Secondary: ct.Secondary,
@@ -240,139 +187,54 @@ func (c *Config) validate() {
 	if c.Colors.Muted == "" {
 		c.Colors.Muted = ct.Muted
 	}
-
-	// Ensure all section orders are unique and positive
-	c.normalizeSectionOrders()
 }
 
-// normalizeSectionOrders ensures section orders are unique and start from 1
-func (c *Config) normalizeSectionOrders() {
-	sections := []struct {
-		name   string
-		config *SectionConfig
-	}{
-		{"model", &c.Sections.Model},
-		{"contextbar", &c.Sections.ContextBar},
-		{"duration", &c.Sections.Duration},
-		{"beads", &c.Sections.Beads},
-		{"status", &c.Sections.Status},
-		{"workspace", &c.Sections.Workspace},
-		{"tools", &c.Sections.Tools},
-		{"sysinfo", &c.Sections.SysInfo},
-	}
-
-	// Collect enabled sections with their orders
-	type sectionOrder struct {
-		name  string
-		order int
-	}
-	var enabledSections []sectionOrder
-	for _, s := range sections {
-		if s.config.Enabled {
-			// If order is 0 or negative, set to a default high value
-			if s.config.Order <= 0 {
-				s.config.Order = 999
-			}
-			enabledSections = append(enabledSections, sectionOrder{s.name, s.config.Order})
-		}
-	}
-
-	// Sort by order
-	sort.Slice(enabledSections, func(i, j int) bool {
-		return enabledSections[i].order < enabledSections[j].order
-	})
-
-	// Reassign orders starting from 1
-	for i, es := range enabledSections {
-		switch es.name {
-		case "model":
-			c.Sections.Model.Order = i + 1
-		case "contextbar":
-			c.Sections.ContextBar.Order = i + 1
-		case "duration":
-			c.Sections.Duration.Order = i + 1
-		case "beads":
-			c.Sections.Beads.Order = i + 1
-		case "status":
-			c.Sections.Status.Order = i + 1
-		case "workspace":
-			c.Sections.Workspace.Order = i + 1
-		case "tools":
-			c.Sections.Tools.Order = i + 1
-		case "sysinfo":
-			c.Sections.SysInfo.Order = i + 1
-		}
-	}
-}
-
-// GetEnabledSections returns a list of enabled section names in order
+// GetEnabledSections returns a list of enabled section names in order from layout
+// If layout is empty, returns all enabled sections in default order
 func (c *Config) GetEnabledSections() []string {
-	type sectionOrder struct {
-		name  string
-		order int
+	// If layout is configured, derive from layout.lines
+	if len(c.Layout.Lines) > 0 {
+		seen := make(map[string]bool)
+		var result []string
+		for _, line := range c.Layout.Lines {
+			for _, sectionName := range line.Sections {
+				if !seen[sectionName] {
+					seen[sectionName] = true
+					result = append(result, sectionName)
+				}
+			}
+		}
+		return result
 	}
 
-	var sections []sectionOrder
-
-	if c.Sections.Model.Enabled {
-		sections = append(sections, sectionOrder{"model", c.Sections.Model.Order})
-	}
-	if c.Sections.ContextBar.Enabled {
-		sections = append(sections, sectionOrder{"contextbar", c.Sections.ContextBar.Order})
-	}
-	if c.Sections.Duration.Enabled {
-		sections = append(sections, sectionOrder{"duration", c.Sections.Duration.Order})
-	}
-	if c.Sections.Beads.Enabled {
-		sections = append(sections, sectionOrder{"beads", c.Sections.Beads.Order})
-	}
-	if c.Sections.Status.Enabled {
-		sections = append(sections, sectionOrder{"status", c.Sections.Status.Order})
-	}
-	if c.Sections.Workspace.Enabled {
-		sections = append(sections, sectionOrder{"workspace", c.Sections.Workspace.Order})
-	}
-	if c.Sections.Tools.Enabled {
-		sections = append(sections, sectionOrder{"tools", c.Sections.Tools.Order})
-	}
-	if c.Sections.SysInfo.Enabled {
-		sections = append(sections, sectionOrder{"sysinfo", c.Sections.SysInfo.Order})
-	}
-
-	sort.Slice(sections, func(i, j int) bool {
-		return sections[i].order < sections[j].order
-	})
-
+	// Fallback: return all enabled sections in default order
+	defaultOrder := []string{"model", "contextbar", "duration", "beads", "status", "workspace", "tools", "sysinfo"}
 	var result []string
-	for _, s := range sections {
-		result = append(result, s.name)
+	for _, name := range defaultOrder {
+		if c.IsSectionEnabled(name) {
+			result = append(result, name)
+		}
 	}
-
 	return result
 }
 
 // IsSectionEnabled checks if a specific section is enabled
+// A section is enabled if it appears in any layout.lines configuration
+// If layout is empty, all sections are considered enabled (fallback behavior)
 func (c *Config) IsSectionEnabled(sectionName string) bool {
-	switch sectionName {
-	case "model":
-		return c.Sections.Model.Enabled
-	case "contextbar":
-		return c.Sections.ContextBar.Enabled
-	case "duration":
-		return c.Sections.Duration.Enabled
-	case "beads":
-		return c.Sections.Beads.Enabled
-	case "status":
-		return c.Sections.Status.Enabled
-	case "workspace":
-		return c.Sections.Workspace.Enabled
-	case "tools":
-		return c.Sections.Tools.Enabled
-	case "sysinfo":
-		return c.Sections.SysInfo.Enabled
-	default:
-		return false
+	if len(c.Layout.Lines) == 0 {
+		// No layout configured, all sections enabled
+		return true
 	}
+
+	for _, line := range c.Layout.Lines {
+		for _, name := range line.Sections {
+			if name == sectionName {
+				return true
+			}
+		}
+	}
+	return false
 }
 
 // GetRefreshInterval returns the refresh interval as a time.Duration
@@ -415,30 +277,6 @@ func (c *Config) ToYAML() (string, error) {
 		return "", err
 	}
 	return string(data), nil
-}
-
-// GetSectionOrder returns the order for a specific section
-func (c *Config) GetSectionOrder(sectionName string) int {
-	switch sectionName {
-	case "model":
-		return c.Sections.Model.Order
-	case "contextbar":
-		return c.Sections.ContextBar.Order
-	case "duration":
-		return c.Sections.Duration.Order
-	case "beads":
-		return c.Sections.Beads.Order
-	case "status":
-		return c.Sections.Status.Order
-	case "workspace":
-		return c.Sections.Workspace.Order
-	case "tools":
-		return c.Sections.Tools.Order
-	case "sysinfo":
-		return c.Sections.SysInfo.Order
-	default:
-		return 999
-	}
 }
 
 // DefaultLayout returns the default 3-line layout configuration
