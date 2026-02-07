@@ -74,63 +74,52 @@ sudo cp claude-hud-darwin-arm64 /usr/local/bin/claude-hud
 Create a configuration file at `~/.config/claude-hud/config.yaml`:
 
 ```yaml
-# Claude HUD Enhanced Configuration
-
-# Refresh interval in milliseconds (100-5000)
-refresh_interval_ms: 500
-
-# Configurable layout system
+# Layout Configuration
+# Defines which sections appear on each line and their order
+# Available sections: model, contextbar, duration, beads, status, workspace, tools, sysinfo
 layout:
-  # Enable responsive design (adapts to terminal size)
+  # Responsive layout - adapts to terminal width
   responsive:
     enabled: true
-    small_breakpoint: 80   # Columns < 80: minimal layout
-    medium_breakpoint: 120 # Columns 80-119: balanced layout
-    large_breakpoint: 160  # Columns >= 120: full layout
+    small: 80   # Columns below this: essential sections only
+    medium: 120 # Columns below this: essential + important sections
+    large: 160  # Columns below this: show everything
 
-  # Define each line with sections and separators
   lines:
-    - sections: [session]
-      separator: " | "
-    - sections: [workspace, status]
-      separator: " | "
-    - sections: [tools]
-      separator: " | "
-    - sections: [sysinfo]
+    # Line 1: Model, context bar, session duration
+    - sections: [model, contextbar, duration]
       separator: " | "
 
-# Section configuration
-sections:
-  session:
-    enabled: true
-    order: 1
-  beads:
-    enabled: true
-    order: 2
-  status:
-    enabled: true
-    order: 3
-  workspace:
-    enabled: true
-    order: 4
-  tools:
-    enabled: true
-    order: 5
-  sysinfo:
-    enabled: true
-    order: 6
+    # Line 2: Workspace, git status, beads issue tracker
+    - sections: [workspace, status, beads]
+      separator: " | "
 
-# Color customization (uses Catppuccin Mocha by default)
+    # Line 3: Tool activity, system info
+    - sections: [tools, sysinfo]
+      separator: " | "
+
+# Color Customization (Catppuccin Mocha theme by default)
+# Colors can be specified as named colors (blue, red, green, etc.)
+# or as hex codes (#89dceb, #a6e3a1, etc.)
 colors:
-  primary: "#89dceb"
-  secondary: "#cba6f7"
-  error: "#f38ba8"
-  warning: "#fab387"
-  info: "#b4befe"
-  success: "#a6e3a1"
-  muted: "#6c7086"
+  primary: "#89dceb"   # Sky blue - main color for important elements
+  secondary: "#cba6f7" # Mauve - secondary color
+  error: "#f38ba8"     # Red - error messages and states
+  warning: "#fab387"   # Orange - warning messages
+  info: "#b4befe"      # Lavender - informational messages
+  success: "#a6e3a1"   # Green - success messages
+  muted: "#6c7086"     # Gray - muted/de-emphasized text
+
+# Refresh interval in milliseconds
+# Controls how often the HUD updates (min: 100ms, max: 5000ms)
+refresh_interval_ms: 300
+
+# Display mode
+compact_mode: true  # If true, limits output to max_lines
+max_lines: 2        # Maximum lines to show in compact mode
 
 # Debug mode
+# Enables verbose logging for troubleshooting
 debug: false
 ```
 
@@ -226,46 +215,36 @@ echo '{"model":{"display_name":"Opus"},"workspace":{"current_dir":"/home/test"}}
 
 #### Customization
 
-Configure which sections appear and their order in `~/.config/claude-hud/config.yaml`:
+Configure which sections appear and their order in `~/.config/claude-hud/config.yaml` using the `layout.lines` configuration:
 
 ```yaml
-sections:
-  session:
-    enabled: true
-    order: 1
-  beads:
-    enabled: true
-    order: 2
-  status:
-    enabled: true
-    order: 3
-  workspace:
-    enabled: true
-    order: 4
+layout:
+  lines:
+    # Customize which sections appear on each line
+    - sections: [model, contextbar, duration]  # Line 1
+      separator: " | "
+    - sections: [workspace, status, beads]     # Line 2
+      separator: " | "
+    - sections: [tools, sysinfo]               # Line 3
+      separator: " | "
 ```
 
 ## Sections
 
-### Session Section
+### Model, ContextBar & Duration Sections
 
-Displays information about your current Claude Code session:
-- Model name (e.g., "glm-4.7", "Claude Opus")
-- Context progress bar (plain text at low usage, yellow/red at high usage)
-- Token breakdown at high usage (≥85%)
-- Session duration
-- Tool usage activity
-- Agent activity
-- Todo progress
-- Estimated cost
+**Model Section**: Displays the current model name (e.g., "glm-4.7", "claude-opus-4-5")
 
-**Context Progress Bar Colors:**
+**ContextBar Section**: Shows context usage with color-coded progress bar
 - Plain text (<70%): Normal context usage
-- 🟡 Yellow (70-84%): Approaching limit
-- 🔴 Red (≥85%): High usage with token breakdown
+- Yellow (70-84%): Approaching limit
+- Red (≥85%): High usage with token breakdown
 
-Example output (4-line full mode):
+**Duration Section**: Session duration in human-readable format (e.g., "2h15m")
+
+Example output:
 ```
-glm-4.7 2h15m | █████████░ 92% (in: 185k, cache: 12k) | ◐ Implement feature X | $0.45
+glm-4.7 2h15m | █████████░ 92% (in: 185k, cache: 12k)
 ```
 
 ### Tools Section
@@ -371,51 +350,14 @@ make lint
 
 ## Configuration
 
-### Layout System
+### Display Mode
 
-The layout system allows you to customize which sections appear on each line:
-
-```yaml
-layout:
-  responsive:
-    enabled: true
-    small_breakpoint: 80
-    medium_breakpoint: 120
-    large_breakpoint: 160
-  lines:
-    - sections: [session]
-      separator: " | "
-    - sections: [workspace, status]
-      separator: " | "
-    - sections: [tools]
-      separator: " | "
-    - sections: [sysinfo]
-      separator: " | "
-```
-
-### Section Order
-
-Control the order and visibility of sections:
+Control how many lines are displayed:
 
 ```yaml
-sections:
-  session:
-    enabled: true
-    order: 1
-  tools:
-    enabled: true
-    order: 2
-  beads:
-    enabled: true
-    order: 3
-  status:
-    enabled: true
-    order: 4
-  workspace:
-    enabled: true
-    order: 5
-  sysinfo:
-    enabled: false  # Disable this section
+# Compact mode limits output to max_lines
+compact_mode: true
+max_lines: 2        # Maximum lines to show in compact mode
 ```
 
 ### Colors
@@ -438,7 +380,7 @@ colors:
 Control how often the statusline updates (100-5000ms):
 
 ```yaml
-refresh_interval_ms: 500  # Update every 500ms
+refresh_interval_ms: 300  # Update every 300ms
 ```
 
 ## Architecture
