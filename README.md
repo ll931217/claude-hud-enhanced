@@ -55,16 +55,18 @@ sudo cp bin/claude-hud /usr/local/bin/
 
 #### From Release
 
-Download the appropriate binary for your platform from the [releases page](https://github.com/ll931217/claude-hud-enhanced/releases):
+Download the appropriate archive for your platform from the [releases page](https://github.com/ll931217/claude-hud-enhanced/releases):
 
 ```bash
 # Linux AMD64
-wget https://github.com/ll931217/claude-hud-enhanced/releases/latest/download/claude-hud-linux-amd64
+wget https://github.com/ll931217/claude-hud-enhanced/releases/latest/download/claude-hud-latest-linux-amd64.tar.gz
+tar -xzf claude-hud-latest-linux-amd64.tar.gz
 chmod +x claude-hud-linux-amd64
 sudo cp claude-hud-linux-amd64 /usr/local/bin/claude-hud
 
 # macOS ARM64
-wget https://github.com/ll931217/claude-hud-enhanced/releases/latest/download/claude-hud-darwin-arm64
+wget https://github.com/ll931217/claude-hud-enhanced/releases/latest/download/claude-hud-latest-darwin-arm64.tar.gz
+tar -xzf claude-hud-latest-darwin-arm64.tar.gz
 chmod +x claude-hud-darwin-arm64
 sudo cp claude-hud-darwin-arm64 /usr/local/bin/claude-hud
 ```

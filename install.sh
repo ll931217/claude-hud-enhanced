@@ -67,22 +67,31 @@ get_latest_version() {
 install_binary() {
     local version=$1
     local platform=$2
-    local download_url="https://github.com/ll931217/claude-hud-enhanced/releases/download/${version}/claude-hud-${platform}"
+    local archive_name="claude-hud-${version}-${platform}.tar.gz"
+    local download_url="https://github.com/ll931217/claude-hud-enhanced/releases/download/${version}/${archive_name}"
 
     print_msg "$BLUE" "Downloading claude-hud ${version} for ${platform}..."
 
-    # Create temp file
-    local tmp_file
-    tmp_file=$(mktemp)
+    # Create temp directory
+    local tmp_dir
+    tmp_dir=$(mktemp -d)
 
-    # Download binary
-    if ! curl -fsSL "$download_url" -o "$tmp_file"; then
-        rm -f "$tmp_file"
-        error_exit "Failed to download binary from $download_url"
+    # Download archive
+    if ! curl -fsSL "$download_url" -o "${tmp_dir}/${archive_name}"; then
+        rm -rf "$tmp_dir"
+        error_exit "Failed to download archive from $download_url"
     fi
 
+    # Extract archive
+    print_msg "$BLUE" "Extracting archive..."
+    tar -xzf "${tmp_dir}/${archive_name}" -C "$tmp_dir"
+
+    # Find the extracted binary
+    local binary_name
+    binary_name=$(find "$tmp_dir" -type f -name "claude-hud-*" | head -1 | xargs basename)
+
     # Make executable
-    chmod +x "$tmp_file"
+    chmod +x "${tmp_dir}/${binary_name}"
 
     # Create .claude directory if it doesn't exist
     mkdir -p ~/.claude
@@ -95,8 +104,11 @@ install_binary() {
     fi
 
     # Install binary
-    mv "$tmp_file" ~/.claude/claude-hud
+    cp "${tmp_dir}/${binary_name}" ~/.claude/claude-hud
     print_msg "$GREEN" "Binary installed to ~/.claude/claude-hud"
+
+    # Cleanup
+    rm -rf "$tmp_dir"
 }
 
 # Update Claude Code settings
