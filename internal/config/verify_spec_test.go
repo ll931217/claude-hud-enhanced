@@ -53,8 +53,8 @@ debug: false
 
 	// Verify sections
 	sections := cfg.GetEnabledSections()
-	if len(sections) != 4 {
-		t.Errorf("Expected 4 enabled sections, got %d", len(sections))
+	if len(sections) != 6 {
+		t.Errorf("Expected 6 enabled sections, got %d", len(sections))
 	}
 
 	// Verify colors

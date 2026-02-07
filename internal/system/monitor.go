@@ -155,7 +155,7 @@ func (m *Monitor) FormatCPUDisplay() string {
 	if m.cpu.UsagePercent == 0 {
 		return ""
 	}
-	return fmt.Sprintf("💻 %.0f%%", m.cpu.UsagePercent)
+	return fmt.Sprintf("CPU %.0f%%", m.cpu.UsagePercent)
 }
 
 // FormatMemoryDisplay formats memory usage for display
@@ -167,7 +167,7 @@ func (m *Monitor) FormatMemoryDisplay() string {
 	usedGB := float64(m.memory.Used) / 1024 / 1024 / 1024
 	totalGB := float64(m.memory.Total) / 1024 / 1024 / 1024
 
-	return fmt.Sprintf("🎯 %.1f/%.0fGB", usedGB, totalGB)
+	return fmt.Sprintf("RAM %.1f/%.0fGB", usedGB, totalGB)
 }
 
 // FormatDiskDisplay formats disk usage for display
@@ -178,7 +178,7 @@ func (m *Monitor) FormatDiskDisplay() string {
 
 	freeGB := float64(m.disk.Available) / 1024 / 1024 / 1024
 
-	return fmt.Sprintf("💾 %.0fGB", freeGB)
+	return fmt.Sprintf("DISK %.0fGB", freeGB)
 }
 
 // FormatDirDisplay formats the current directory for display
@@ -204,36 +204,36 @@ func (m *Monitor) FormatDirDisplay() string {
 
 	// Truncate if too long (shorter for statusline mode)
 	// Keep the beginning (~/) and the project name
-	if len(dir) > 20 {
+	if len(dir) > 50 {
 		// For paths with ~, keep ~/ and last component
 		if strings.HasPrefix(dir, "~/") {
 			parts := strings.Split(dir, "/")
 			if len(parts) >= 2 {
 				lastPart := parts[len(parts)-1]
-				// Allow up to 17 chars for ~/project-name
-				if len(lastPart) > 17 {
+				// Allow up to 47 chars for ~/project-name
+				if len(lastPart) > 47 {
 					// Truncate the project name
-					lastPart = "..." + lastPart[len(lastPart)-14:]
+					lastPart = "..." + lastPart[len(lastPart)-44:]
 				}
 				dir = "~/" + lastPart
 			}
 		} else {
 			// For other paths, keep beginning
-			dir = dir[:17] + "..."
+			dir = dir[:47] + "..."
 		}
 	}
 
 	return dir
 }
 
-// FormatLanguageDisplay formats the language with icon
+// FormatLanguageDisplay formats the language name with icon
 func (m *Monitor) FormatLanguageDisplay() string {
 	if m.language == "" {
 		return ""
 	}
 
 	icon := getLanguageIcon(m.language)
-	return icon + " " + m.language
+	return fmt.Sprintf("%s %s", icon, m.language)
 }
 
 // getCPUUsage retrieves CPU usage on Linux/macOS

@@ -22,6 +22,23 @@ Create a minimal configuration:
 # Refresh interval in milliseconds (100-5000)
 refresh_interval_ms: 500
 
+# Configurable layout system
+layout:
+  responsive:
+    enabled: true
+    small_breakpoint: 80
+    medium_breakpoint: 120
+    large_breakpoint: 160
+  lines:
+    - sections: [session]
+      separator: " | "
+    - sections: [workspace, status]
+      separator: " | "
+    - sections: [tools]
+      separator: " | "
+    - sections: [sysinfo]
+      separator: " | "
+
 # Section configuration
 sections:
   session:
@@ -36,6 +53,12 @@ sections:
   workspace:
     enabled: true
     order: 4
+  tools:
+    enabled: true
+    order: 5
+  sysinfo:
+    enabled: true
+    order: 6
 ```
 
 ## Configuration Options
@@ -69,6 +92,82 @@ Enable debug logging.
 
 ```yaml
 debug: true  # Enable debug logging
+```
+
+### Layout Configuration
+
+The layout system controls how sections are arranged on each line and how the statusline responds to terminal size changes.
+
+#### Structure
+
+```yaml
+layout:
+  responsive:
+    enabled: boolean
+    small_breakpoint: int
+    medium_breakpoint: int
+    large_breakpoint: int
+  lines:
+    - sections: [list of section names]
+      separator: string
+```
+
+#### `layout.responsive.enabled`
+
+Enable responsive design that adapts to terminal size.
+
+- **Type**: Boolean
+- **Default**: true
+
+When enabled, sections are hidden based on terminal width:
+- Small (<80 cols): Essential sections only (model, context, todos)
+- Medium (80-119 cols): Essential + Important sections (adds git status, workspace)
+- Large (120+ cols): All sections including optional (tools, system info)
+
+#### `layout.responsive.breakpoints`
+
+Control the terminal width breakpoints for responsive behavior.
+
+- **small_breakpoint**: Columns below this use minimal layout
+- **medium_breakpoint**: Columns between small and medium use balanced layout
+- **large_breakpoint**: Columns at or above this use full layout
+
+```yaml
+layout:
+  responsive:
+    enabled: true
+    small_breakpoint: 80
+    medium_breakpoint: 120
+    large_breakpoint: 160
+```
+
+#### `layout.lines`
+
+Define which sections appear on each line and their separators.
+
+```yaml
+layout:
+  lines:
+    - sections: [session]
+      separator: " | "
+    - sections: [workspace, status]
+      separator: " | "
+    - sections: [tools]
+      separator: " | "
+    - sections: [sysinfo]
+      separator: " | "
+```
+
+You can customize each line:
+```yaml
+layout:
+  lines:
+    - sections: [session, beads]    # Combine on one line
+      separator: " | "
+    - sections: [status]            # Git status on its own line
+      separator: ""
+    - sections: [workspace, sysinfo]
+      separator: " · "
 ```
 
 ### Section Configuration
@@ -141,7 +240,7 @@ sections:
 
 ##### Workspace Section
 
-Displays system and workspace information.
+Displays workspace information.
 
 ```yaml
 sections:
@@ -151,11 +250,41 @@ sections:
 ```
 
 **Shows:**
-- CPU usage percentage
-- Memory usage
-- Disk usage
+- Detected programming language (with icon)
 - Current directory (truncated)
-- Detected programming language
+
+#### Tools Section
+
+Displays recently used Claude Code tools.
+
+```yaml
+sections:
+  tools:
+    enabled: true
+    order: 5
+```
+
+**Shows:**
+- Recently used tools (max 5)
+- Tool call counts
+- Sorted by most recently used
+- MCP plugin names are shortened
+
+#### SysInfo Section
+
+Displays system resource usage.
+
+```yaml
+sections:
+  sysinfo:
+    enabled: true
+    order: 6
+```
+
+**Shows:**
+- CPU usage percentage
+- Memory usage (used/total)
+- Disk available space
 
 ### Color Configuration
 
@@ -403,7 +532,7 @@ If you see warnings about invalid values:
 
 - Check that numeric values are within valid ranges
 - Ensure hex colors are valid (6-digit hex codes)
-- Verify section names are correct (session, beads, status, workspace)
+- Verify section names are correct (session, beads, status, workspace, tools, sysinfo)
 
 ## Default Configuration
 
@@ -412,6 +541,22 @@ The built-in default configuration is equivalent to:
 ```yaml
 refresh_interval_ms: 500
 debug: false
+
+layout:
+  responsive:
+    enabled: true
+    small_breakpoint: 80
+    medium_breakpoint: 120
+    large_breakpoint: 160
+  lines:
+    - sections: [session]
+      separator: " | "
+    - sections: [workspace, status]
+      separator: " | "
+    - sections: [tools]
+      separator: " | "
+    - sections: [sysinfo]
+      separator: " | "
 
 sections:
   session:
@@ -426,6 +571,12 @@ sections:
   workspace:
     enabled: true
     order: 4
+  tools:
+    enabled: true
+    order: 5
+  sysinfo:
+    enabled: true
+    order: 6
 
 colors:
   primary: "#89dceb"

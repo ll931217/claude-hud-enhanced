@@ -11,6 +11,7 @@ type ClaudeCodeInput struct {
 	Workspace      WorkspaceInfo `json:"workspace"`
 	TranscriptPath string        `json:"transcript_path"`
 	Model          ModelInfo     `json:"model"`
+	ContextWindow  *ContextWindowInput `json:"context_window,omitempty"`
 }
 
 type WorkspaceInfo struct {
@@ -19,6 +20,20 @@ type WorkspaceInfo struct {
 
 type ModelInfo struct {
 	DisplayName string `json:"display_name"`
+}
+
+// ContextWindowInput contains context usage information from Claude Code
+type ContextWindowInput struct {
+	CurrentUsage UsageInfoInput `json:"current_usage"`
+	ContextWindowSize int `json:"context_window_size"`
+}
+
+// UsageInfoInput contains token usage breakdown
+type UsageInfoInput struct {
+	InputTokens             int `json:"input_tokens"`
+	CacheCreationInputTokens int `json:"cache_creation_input_tokens"`
+	CacheReadInputTokens    int `json:"cache_read_input_tokens"`
+	OutputTokens            int `json:"output_tokens"`
 }
 
 // readStdinJSON reads and parses JSON from stdin

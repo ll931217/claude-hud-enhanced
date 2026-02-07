@@ -37,6 +37,14 @@ func (m *MockSection) Name() string {
 	return m.name
 }
 
+func (m *MockSection) Priority() registry.Priority {
+	return registry.PriorityImportant
+}
+
+func (m *MockSection) MinWidth() int {
+	return 0
+}
+
 func (m *MockSection) SetContent(content string) {
 	m.content = content
 }

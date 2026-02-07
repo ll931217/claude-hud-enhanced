@@ -10,4 +10,6 @@ func init() {
 	registry.Register("beads", NewBeadsSection)
 	registry.Register("status", NewStatusSection)
 	registry.Register("workspace", NewWorkspaceSection)
+	registry.Register("tools", NewToolsSection)
+	registry.Register("sysinfo", NewSysInfoSection)
 }

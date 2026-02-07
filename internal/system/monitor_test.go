@@ -139,8 +139,8 @@ func TestMonitor_FormatDirDisplay(t *testing.T) {
 	if display == "" {
 		t.Error("FormatDirDisplay returned empty")
 	}
-	// Check that it's not too long
-	if len(display) > 33 {
+	// Check that it's not too long (increased from 20 to 50 chars)
+	if len(display) > 50 {
 		t.Errorf("FormatDirDisplay too long: %d chars", len(display))
 	}
 }

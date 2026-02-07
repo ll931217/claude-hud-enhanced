@@ -53,25 +53,36 @@ Shows information about your current Claude Code session.
 
 **Example Output:**
 ```
-Session: 2h15m | $0.45 | 3 tools | 1 agent | ✓ 5/7 todos
+glm-4.7 2h15m | █████████░ 92% (in: 185k, cache: 12k) | ◐ Implement feature X | $0.45
 ```
 
 **Breakdown:**
+- `glm-4.7` - Model name
 - `2h15m` - Session duration
+- `█████████░ 92%` - Context progress bar with percentage
+- `(in: 185k, cache: 12k)` - Token breakdown (shown at ≥85% usage)
+- `◐ Implement feature X` - Current todo in progress
 - `$0.45` - Estimated token cost
-- `3 tools` - Number of active tools
-- `1 agent` - Number of active agents
-- `✓ 5/7 todos` - Todo progress (5 of 7 completed)
 
-**When current todo is in progress:**
+**Context Progress Bar Colors:**
+- Plain text (<70%): Normal context usage
+- 🟡 Yellow (70-84%): Approaching limit
+- 🔴 Red (≥85%): High usage with token breakdown
+
+### Tools Section
+
+Displays recently used Claude Code tools with call counts.
+
+**Example Output:**
 ```
-◐ Implement feature X
+Read×12 | Edit×8 | Bash×5 | Grep×3 | Ask×2
 ```
 
-**When all todos complete:**
-```
-✓ All todos complete (5/5)
-```
+**Breakdown:**
+- `Read×12` - Read tool used 12 times
+- `Edit×8` - Edit tool used 8 times
+- Tools are sorted by most recently used
+- MCP plugin names are shortened (e.g., `mcp__plugin_playwright_playwright__browser_click` → `browser_click`)
 
 ### Beads Section
 
@@ -79,14 +90,17 @@ Shows your beads issue tracker status.
 
 **Example Output:**
 ```
-Beads: 12 open | 3 in progress | 1 blocked | [dotfiles-abc.1] Implement feature X
+☍ 40 | ✓ 40 closed
 ```
 
 **Breakdown:**
-- `12 open` - Total open issues
-- `3 in progress` - Issues currently being worked on
-- `1 blocked` - Issues blocked by dependencies
-- `[dotfiles-abc.1] Implement feature X` - Current task (if available)
+- `40` - Total open issues
+- `✓ 40 closed` - Closed issues
+
+When working on an issue:
+```
+◐ [beads-123] Implement feature X (P2)
+```
 
 **Issue Status Icons:**
 - `✗` - Open issue
@@ -122,31 +136,37 @@ Worktree:
 🌿 main [feature-branch]
 ```
 
-Stashed changes:
-```
-🌿 main + 2 stashed
-```
-
 ### Workspace Section
 
-Shows system and workspace information.
+Shows workspace information.
 
 **Example Output:**
 ```
-💻 45% CPU | 🎯 62% RAM (4.2/16GB) | 💾 78% Disk | ~/Projects/claude-hud-enhanced | Go
+🐹 Go | ~/claude-hud-enhanced
 ```
 
 **Breakdown:**
-- `💻 45% CPU` - CPU usage percentage
-- `🎯 62% RAM (4.2/16GB)` - Memory usage
-- `💾 78% Disk` - Disk usage
-- `~/Projects/claude-hud-enhanced` - Current directory (truncated)
-- `Go` - Detected programming language
+- `🐹 Go` - Detected programming language with icon
+- `~/claude-hud-enhanced` - Current directory (truncated)
+
+### SysInfo Section
+
+Shows system resource usage.
+
+**Example Output:**
+```
+💻 15% | 🎯 8.2/32GB | 💾 45GB
+```
+
+**Breakdown:**
+- `💻 15%` - CPU usage percentage
+- `🎯 8.2/32GB` - Memory usage (used/total)
+- `💾 45GB` - Disk available space
 
 **Color Coding:**
-- **Green** - Usage < 70%
-- **Yellow/Warning** - Usage 70-89%
-- **Red/Critical** - Usage ≥ 90%
+- Plain text (<70%): Normal usage
+- **Yellow/Warning** (70-89%): High usage
+- **Red/Critical** (≥90%): Critical usage
 
 ## Common Workflows
 
@@ -189,6 +209,23 @@ Track your progress:
 
 ## Customizing Display
 
+### Configuring Layout
+
+Edit `~/.config/claude-hud/config.yaml` to customize which sections appear on each line:
+
+```yaml
+layout:
+  lines:
+    - sections: [session, beads]    # Combine on one line
+      separator: " | "
+    - sections: [workspace, status]
+      separator: " | "
+    - sections: [tools]              # Tools on its own line
+      separator: " | "
+    - sections: [sysinfo]
+      separator: " | "
+```
+
 ### Changing Section Order
 
 Edit `~/.config/claude-hud/config.yaml`:
@@ -207,6 +244,12 @@ sections:
   workspace:
     enabled: true
     order: 4
+  tools:
+    enabled: true
+    order: 5
+  sysinfo:
+    enabled: true
+    order: 6
 ```
 
 ### Disabling Sections
@@ -223,6 +266,10 @@ sections:
     enabled: true
   workspace:
     enabled: false  # Hide workspace info
+  tools:
+    enabled: false  # Hide tools section
+  sysinfo:
+    enabled: false  # Hide system info
 ```
 
 ### Adjusting Refresh Rate
@@ -237,6 +284,16 @@ Or save CPU:
 
 ```yaml
 refresh_interval_ms: 2000  # Update every 2 seconds
+```
+
+### Disabling Responsive Layout
+
+To always show full layout regardless of terminal size:
+
+```yaml
+layout:
+  responsive:
+    enabled: false
 ```
 
 ## Integration with Shell

@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/ll931217/claude-hud-enhanced/internal/config"
+	"github.com/ll931217/claude-hud-enhanced/internal/errors"
 	"github.com/ll931217/claude-hud-enhanced/internal/registry"
 	"github.com/ll931217/claude-hud-enhanced/internal/statusline"
 	"github.com/ll931217/claude-hud-enhanced/internal/theme"
@@ -40,21 +41,25 @@ func NewSessionSection(cfg interface{}) (registry.Section, error) {
 
 // Render returns the session section output
 func (s *SessionSection) Render() string {
-	// Parse transcript
+	var parts []string
+
+	// Try to get model name from statusline context first (doesn't require transcript)
+	model := statusline.GetModelName()
+
+	if model != "" {
+		// Shorten model name
+		model = strings.ReplaceAll(model, "Claude ", "")
+		model = strings.ReplaceAll(model, "Sonnet", "SN")
+		model = strings.ReplaceAll(model, "Haiku", "HK")
+		model = strings.ReplaceAll(model, "Opus", "OP")
+		parts = append(parts, model)
+	}
+
+	// Try to parse transcript for additional information
 	ctx, cancel := context.WithTimeout(context.Background(), 100*time.Millisecond)
 	defer cancel()
 
-	if err := s.parser.Parse(ctx); err != nil {
-		// Graceful degradation - return placeholder (compact)
-		return "[No transcript]"
-	}
-
-	var parts []string
-
-	// Add model name if available
-	if model := s.getModelName(); model != "" {
-		parts = append(parts, model)
-	}
+	_ = s.parser.Parse(ctx) // Try to parse, but don't fail if it doesn't work
 
 	// Add context bar if available
 	if contextBar := s.getContextBar(); contextBar != "" {
@@ -116,16 +121,82 @@ func (s *SessionSection) getModelName() string {
 
 // getContextBar returns the context window progress bar with color coding
 func (s *SessionSection) getContextBar() string {
+	// First, try to get context window data from Claude Code's JSON input (most reliable)
+	windowSize := statusline.GetContextWindowSize()
+	inputTokens := statusline.GetContextInputTokens()
+	cacheTokens := statusline.GetContextCacheTokens()
+
+	if windowSize > 0 {
+		// Calculate percentage from JSON input data
+		totalTokens := inputTokens + cacheTokens
+		percentage := (totalTokens * 100) / windowSize
+		if percentage > 100 {
+			percentage = 100
+		}
+		if percentage < 0 {
+			percentage = 0
+		}
+
+		bar := s.progressBar(percentage, 10) // 10-char width
+		color := theme.ContextColor(percentage)
+
+		// Show format: "72%" without brackets as user requested
+		result := fmt.Sprintf("%s%s %d%%", color, bar, percentage)
+		if color != "" {
+			result += theme.Reset
+		}
+
+		// Add token breakdown at high context usage
+		if percentage >= 85 {
+			var parts []string
+			if inputTokens > 0 {
+				parts = append(parts, fmt.Sprintf("in: %s", formatTokens(inputTokens)))
+			}
+			if cacheTokens > 0 {
+				parts = append(parts, fmt.Sprintf("cache: %s", formatTokens(cacheTokens)))
+			}
+			if len(parts) > 0 {
+				result += fmt.Sprintf("%s (%s)%s", theme.Dim, strings.Join(parts, ", "), theme.Reset)
+			}
+		}
+
+		return result
+	}
+
+	// Fallback: Try to get from transcript parser
 	cw := s.parser.GetContextWindow()
-	if cw == nil || cw.ContextWindowSize == 0 {
+	if cw == nil {
+		// No context window data available
 		return ""
+	}
+	if cw.ContextWindowSize == 0 {
+		// Debug: log why context window size is 0
+		errors.Debug("session", "context window size is 0 - trying to infer from model")
+		// Try to infer context window size from model name
+		if model := s.getModelName(); model != "" {
+			inferredSize := inferContextWindowFromModel(model)
+			if inferredSize > 0 {
+				// Create a new context window with inferred size
+				cw.ContextWindowSize = inferredSize
+				errors.Debug("session", "inferred context window size %d from model %s", inferredSize, model)
+			}
+		}
+		// If still 0, return empty
+		if cw.ContextWindowSize == 0 {
+			return ""
+		}
 	}
 
 	percentage := s.parser.GetContextPercentage()
 	bar := s.progressBar(percentage, 10) // 10-char width
 	color := theme.ContextColor(percentage)
 
-	result := fmt.Sprintf("%s[%s]%d%%%s", color, bar, percentage, theme.Reset)
+	// Show format: "72%" without brackets as user requested
+	// At high usage, show token breakdown
+	result := fmt.Sprintf("%s%s %d%%", color, bar, percentage)
+	if color != "" {
+		result += theme.Reset
+	}
 
 	// Add token breakdown at high context usage
 	if percentage >= 85 {
@@ -136,6 +207,13 @@ func (s *SessionSection) getContextBar() string {
 	}
 
 	return result
+}
+
+// inferContextWindowFromModel infers context window size from model name
+func inferContextWindowFromModel(model string) int {
+	// All current Claude models have 200k token context
+	// This may change in the future, but it's a reasonable fallback
+	return 200000
 }
 
 // progressBar creates a visual progress bar

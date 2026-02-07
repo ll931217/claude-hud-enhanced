@@ -15,6 +15,7 @@ import (
 type Config struct {
 	Sections         SectionsConfig `yaml:"sections"`
 	Colors           ColorsConfig   `yaml:"colors"`
+	Layout           LayoutConfig   `yaml:"layout"`
 	RefreshIntervalMs int            `yaml:"refresh_interval_ms"`
 	Debug            bool           `yaml:"debug"`
 	CompactMode      bool           `yaml:"compact_mode"`
@@ -27,6 +28,8 @@ type SectionsConfig struct {
 	Beads     SectionConfig `yaml:"beads"`
 	Status    SectionConfig `yaml:"status"`
 	Workspace SectionConfig `yaml:"workspace"`
+	Tools     SectionConfig `yaml:"tools"`
+	SysInfo   SectionConfig `yaml:"sysinfo"`
 }
 
 // SectionConfig represents configuration for a single section
@@ -44,6 +47,28 @@ type ColorsConfig struct {
 	Info      string `yaml:"info"`
 	Success   string `yaml:"success"`
 	Muted     string `yaml:"muted"`
+}
+
+// LayoutConfig holds configuration for custom layouts
+type LayoutConfig struct {
+	Lines      []LineConfig    `yaml:"lines"`
+	Responsive ResponsiveConfig `yaml:"responsive"`
+}
+
+// LineConfig defines sections on a single line with custom separator
+type LineConfig struct {
+	Sections  []string `yaml:"sections"` // Section names in order
+	Separator string   `yaml:"separator"` // Custom separator for this line
+	Wrap      bool     `yaml:"wrap"` // Allow wrapping to next line if too long
+}
+
+// ResponsiveConfig holds settings for responsive behavior
+type ResponsiveConfig struct {
+	Enabled bool `yaml:"enabled"` // Enable responsive behavior
+	// Breakpoints for different terminal sizes
+	Small  int `yaml:"small_breakpoint"`  // Default: 80 columns
+	Medium int `yaml:"medium_breakpoint"` // Default: 120 columns
+	Large  int `yaml:"large_breakpoint"`  // Default: 160 columns
 }
 
 // defaultConfig returns the embedded default configuration
@@ -68,6 +93,14 @@ func defaultConfig() *Config {
 			Workspace: SectionConfig{
 				Enabled: true,
 				Order:   4,
+			},
+			Tools: SectionConfig{
+				Enabled: true,
+				Order:   5,
+			},
+			SysInfo: SectionConfig{
+				Enabled: true,
+				Order:   6,
 			},
 		},
 		Colors: ColorsConfig{
@@ -271,6 +304,12 @@ func (c *Config) GetEnabledSections() []string {
 	if c.Sections.Workspace.Enabled {
 		sections = append(sections, sectionOrder{"workspace", c.Sections.Workspace.Order})
 	}
+	if c.Sections.Tools.Enabled {
+		sections = append(sections, sectionOrder{"tools", c.Sections.Tools.Order})
+	}
+	if c.Sections.SysInfo.Enabled {
+		sections = append(sections, sectionOrder{"sysinfo", c.Sections.SysInfo.Order})
+	}
 
 	sort.Slice(sections, func(i, j int) bool {
 		return sections[i].order < sections[j].order
@@ -295,6 +334,10 @@ func (c *Config) IsSectionEnabled(sectionName string) bool {
 		return c.Sections.Status.Enabled
 	case "workspace":
 		return c.Sections.Workspace.Enabled
+	case "tools":
+		return c.Sections.Tools.Enabled
+	case "sysinfo":
+		return c.Sections.SysInfo.Enabled
 	default:
 		return false
 	}
@@ -353,7 +396,41 @@ func (c *Config) GetSectionOrder(sectionName string) int {
 		return c.Sections.Status.Order
 	case "workspace":
 		return c.Sections.Workspace.Order
+	case "tools":
+		return c.Sections.Tools.Order
+	case "sysinfo":
+		return c.Sections.SysInfo.Order
 	default:
 		return 999
+	}
+}
+
+// DefaultLayout returns the default 4-line layout configuration
+func DefaultLayout() LayoutConfig {
+	return LayoutConfig{
+		Lines: []LineConfig{
+			{
+				Sections:  []string{"session"},
+				Separator: " | ",
+			},
+			{
+				Sections:  []string{"workspace", "status"},
+				Separator: " | ",
+			},
+			{
+				Sections:  []string{"tools"},
+				Separator: " | ",
+			},
+			{
+				Sections:  []string{"sysinfo"},
+				Separator: " | ",
+			},
+		},
+		Responsive: ResponsiveConfig{
+			Enabled: true,
+			Small:   80,
+			Medium:  120,
+			Large:   160,
+		},
 	}
 }

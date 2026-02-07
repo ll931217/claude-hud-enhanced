@@ -22,5 +22,5 @@ func ContextColor(percentage int) string {
 	if percentage >= 70 {
 		return Yellow
 	}
-	return Green
+	return "" // No color for low usage (user request)
 }

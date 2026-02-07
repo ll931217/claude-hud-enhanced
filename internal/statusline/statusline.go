@@ -246,7 +246,28 @@ func (s *Statusline) RenderStatuslineMode() error {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
-	// Check if compact mode is enabled
+	// Build section map for responsive renderer
+	sectionMap := make(map[string]registry.Section)
+	for _, section := range s.sections {
+		if section.Enabled() {
+			sectionMap[section.Name()] = section
+		}
+	}
+
+	// Use responsive renderer if enabled
+	if s.config.Layout.Responsive.Enabled {
+		renderer := NewResponsiveRenderer(s.config, sectionMap)
+		lines := renderer.RenderLayout()
+		s.output(lines)
+		return nil
+	}
+
+	// Check if new layout is configured (non-responsive)
+	if len(s.config.Layout.Lines) > 0 {
+		return s.renderWithLayout(sectionMap)
+	}
+
+	// Fallback to old modes
 	if s.config.CompactMode {
 		return s.renderCompactMode()
 	}
@@ -279,6 +300,35 @@ func (s *Statusline) RenderStatuslineMode() error {
 		fmt.Print(line)
 	}
 
+	return nil
+}
+
+// renderWithLayout renders sections according to configured layout
+func (s *Statusline) renderWithLayout(sectionMap map[string]registry.Section) error {
+	var outputLines []string
+
+	// Render each line according to layout config
+	for _, lineConfig := range s.config.Layout.Lines {
+		var lineParts []string
+		for _, sectionName := range lineConfig.Sections {
+			if section, ok := sectionMap[sectionName]; ok {
+				content := s.renderSection(section)
+				if content != "" {
+					lineParts = append(lineParts, content)
+				}
+			}
+		}
+
+		if len(lineParts) > 0 {
+			separator := lineConfig.Separator
+			if separator == "" {
+				separator = " | "
+			}
+			outputLines = append(outputLines, strings.Join(lineParts, separator))
+		}
+	}
+
+	s.output(outputLines)
 	return nil
 }
 

@@ -11,26 +11,34 @@ import (
 	"time"
 
 	"github.com/ll931217/claude-hud-enhanced/internal/errors"
+	"github.com/ll931217/claude-hud-enhanced/internal/watcher"
 )
 
 // Reader reads and caches beads issues from .beads/issues.jsonl
 type Reader struct {
-	mu          sync.RWMutex
-	repoPath    string
-	issues      map[string]*Issue
-	byStatus    map[IssueStatus][]*Issue
-	lastModTime time.Time
-	lastCheck   time.Time
-	cacheTTL    time.Duration
+	mu              sync.RWMutex
+	repoPath        string
+	issues          map[string]*Issue
+	byStatus        map[IssueStatus][]*Issue
+	lastModTime     time.Time
+	lastCheck       time.Time
+	cacheTTL        time.Duration
+	watcher         *watcher.Watcher
+	watcherStarted  bool
+	forceReload     bool // Set to true when file changes are detected
+	watcherCancel   context.CancelFunc
+	watcherDone     chan struct{}
 }
 
 // NewReader creates a new beads reader for the given repository path
 func NewReader(repoPath string) *Reader {
 	return &Reader{
-		repoPath: repoPath,
-		issues:   make(map[string]*Issue),
-		byStatus: make(map[IssueStatus][]*Issue),
-		cacheTTL: 5 * time.Second,
+		repoPath:      repoPath,
+		issues:        make(map[string]*Issue),
+		byStatus:      make(map[IssueStatus][]*Issue),
+		cacheTTL:      500 * time.Millisecond, // Faster initial load, will be improved with file watching
+		watcher:       watcher.NewWatcher(),
+		watcherDone:   make(chan struct{}),
 	}
 }
 
@@ -49,14 +57,22 @@ func (r *Reader) Exists() bool {
 // Load loads (or reloads) the issues from the JSONL file
 func (r *Reader) Load(ctx context.Context) error {
 	return errors.SafeCall(func() error {
-		// Check if we need to reload
+		// Start watcher on first load if not already started
+		r.startWatcherOnce()
+
+		// Check if we need to reload (either TTL expired or forceReload flag set)
 		r.mu.RLock()
-		needReload := time.Since(r.lastCheck) > r.cacheTTL
+		needReload := r.forceReload || time.Since(r.lastCheck) > r.cacheTTL
 		r.mu.RUnlock()
 
 		if !needReload && len(r.issues) > 0 {
 			return nil
 		}
+
+		// Clear forceReload flag
+		r.mu.Lock()
+		r.forceReload = false
+		r.mu.Unlock()
 
 		// Check if file exists
 		issuesPath := r.GetIssuesPath()
@@ -271,4 +287,76 @@ func (r *Reader) SetCacheTTL(ttl time.Duration) {
 	defer r.mu.Unlock()
 
 	r.cacheTTL = ttl
+}
+
+// startWatcherOnce starts the file watcher on first call (idempotent)
+func (r *Reader) startWatcherOnce() {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	if r.watcherStarted {
+		return
+	}
+
+	r.watcherStarted = true
+
+	// Watch the issues file
+	issuesPath := r.GetIssuesPath()
+	if err := r.watcher.AddWatch(issuesPath); err != nil {
+		errors.Warn("beads.reader", "failed to watch issues file: %v", err)
+		return
+	}
+
+	// Start watcher in background
+	ctx, cancel := context.WithCancel(context.Background())
+	r.watcherCancel = cancel
+
+	go func() {
+		defer close(r.watcherDone)
+
+		if err := r.watcher.Start(ctx); err != nil {
+			errors.Warn("beads.reader", "watcher error: %v", err)
+			return
+		}
+
+		// Handle file change events
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case event := <-r.watcher.Events():
+				if event.Path == issuesPath {
+					// File changed - invalidate cache
+					r.mu.Lock()
+					r.forceReload = true
+					r.mu.Unlock()
+					errors.Debug("beads.reader", "file changed, forcing reload")
+				}
+			case err := <-r.watcher.Errors():
+				errors.Warn("beads.reader", "watcher error: %v", err)
+			}
+		}
+	}()
+
+	errors.Debug("beads.reader", "started watching %s", issuesPath)
+}
+
+// Stop stops the file watcher
+func (r *Reader) Stop() {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	if r.watcherCancel != nil {
+		r.watcherCancel()
+		r.watcherCancel = nil
+	}
+
+	if r.watcher != nil {
+		r.watcher.Stop()
+	}
+
+	// Wait for watcher goroutine to finish
+	if r.watcherDone != nil {
+		<-r.watcherDone
+	}
 }

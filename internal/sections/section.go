@@ -2,6 +2,7 @@ package sections
 
 import (
 	"github.com/ll931217/claude-hud-enhanced/internal/config"
+	"github.com/ll931217/claude-hud-enhanced/internal/registry"
 )
 
 // Section represents a renderable section of the statusline
@@ -22,10 +23,12 @@ type Section interface {
 
 // BaseSection provides common functionality for all sections
 type BaseSection struct {
-	name    string
-	enabled bool
-	order   int
-	config  *config.Config
+	name     string
+	enabled  bool
+	order    int
+	config   *config.Config
+	priority registry.Priority
+	minWidth int
 }
 
 // NewBaseSection creates a new base section
@@ -59,4 +62,27 @@ func (b *BaseSection) Order() int {
 // GetConfig returns the full config
 func (b *BaseSection) GetConfig() *config.Config {
 	return b.config
+}
+
+// Priority returns the display priority for responsive layouts
+func (b *BaseSection) Priority() registry.Priority {
+	if b.priority == 0 {
+		return registry.PriorityImportant // Default
+	}
+	return b.priority
+}
+
+// MinWidth returns the minimum columns needed to display this section
+func (b *BaseSection) MinWidth() int {
+	return b.minWidth
+}
+
+// SetPriority sets the priority for this section
+func (b *BaseSection) SetPriority(p registry.Priority) {
+	b.priority = p
+}
+
+// SetMinWidth sets the minimum width for this section
+func (b *BaseSection) SetMinWidth(w int) {
+	b.minWidth = w
 }

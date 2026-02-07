@@ -1,6 +1,9 @@
 package transcript
 
-import "encoding/json"
+import (
+	"encoding/json"
+	"time"
+)
 
 // EventType represents the type of transcript event
 type EventType string
@@ -64,6 +67,14 @@ type ToolInfo struct {
 	Input      json.RawMessage `json:"input,omitempty"`
 	Streaming  bool            `json:"streaming,omitempty"`
 	ToolUseID  string          `json:"tool_use_id,omitempty"`
+	LastUsed   time.Time       `json:"-"` // Track last use time for recency sorting
+}
+
+// ToolUsage represents aggregated tool usage statistics
+type ToolUsage struct {
+	Name     string
+	Count    int
+	LastUsed time.Time
 }
 
 // ToolResult contains the result of a tool execution

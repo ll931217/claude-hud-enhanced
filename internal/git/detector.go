@@ -308,9 +308,9 @@ func (s *Status) FormatStatus() string {
 		parts = append(parts, fmt.Sprintf("[%s]", s.WorktreeName))
 	}
 
-	// Dirty indicator
+	// Dirty indicator (plus-minus symbol, universally understood as "changed")
 	if s.Dirty {
-		parts = append(parts, "*")
+		parts = append(parts, "±")
 	}
 
 	// Changes count (compact format)
@@ -319,14 +319,15 @@ func (s *Status) FormatStatus() string {
 		parts = append(parts, fmt.Sprintf("%d", totalChanges))
 	}
 
-	// Ahead/Behind
+	// Ahead/Behind (using more visible directional arrows)
 	if s.Ahead > 0 || s.Behind > 0 {
 		if s.Ahead > 0 && s.Behind > 0 {
-			parts = append(parts, fmt.Sprintf("↑%d↓%d", s.Ahead, s.Behind))
+			// Diverged branches: use up-down arrow to clearly indicate divergence
+			parts = append(parts, fmt.Sprintf("⇅ %d|%d", s.Ahead, s.Behind))
 		} else if s.Ahead > 0 {
-			parts = append(parts, fmt.Sprintf("↑%d", s.Ahead))
+			parts = append(parts, fmt.Sprintf("⬆ %d", s.Ahead))
 		} else if s.Behind > 0 {
-			parts = append(parts, fmt.Sprintf("↓%d", s.Behind))
+			parts = append(parts, fmt.Sprintf("⬇ %d", s.Behind))
 		}
 	}
 

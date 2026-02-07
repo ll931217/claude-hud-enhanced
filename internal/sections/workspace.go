@@ -29,35 +29,24 @@ func NewWorkspaceSection(cfg interface{}) (registry.Section, error) {
 
 // Render returns the workspace section output
 func (w *WorkspaceSection) Render() string {
-	// Update system metrics
+	// Update monitor for language detection and directory
 	if err := w.monitor.Update(); err != nil {
 		return "[Workspace: unavailable]"
 	}
 
 	var parts []string
 
-	// Add directory path (no icon to save space)
-	if dir := w.monitor.FormatDirDisplay(); dir != "" {
-		parts = append(parts, dir)
-	}
-
-	// Add language detection
+	// Language first (with icon)
 	if lang := w.monitor.FormatLanguageDisplay(); lang != "" {
 		parts = append(parts, lang)
 	}
 
-	// Add system resources
-	if cpu := w.monitor.FormatCPUDisplay(); cpu != "" {
-		parts = append(parts, cpu)
+	// Then directory
+	if dir := w.monitor.FormatDirDisplay(); dir != "" {
+		parts = append(parts, dir)
 	}
 
-	if mem := w.monitor.FormatMemoryDisplay(); mem != "" {
-		parts = append(parts, mem)
-	}
-
-	if disk := w.monitor.FormatDiskDisplay(); disk != "" {
-		parts = append(parts, disk)
-	}
+	// Note: System metrics (CPU, RAM, Disk) are now in sysinfo section
 
 	if len(parts) == 0 {
 		return "[Workspace: waiting for data]"

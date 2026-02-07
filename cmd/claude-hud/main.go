@@ -135,14 +135,26 @@ func runStatuslineMode() error {
 	if input != nil {
 		// Change to workspace directory if specified
 		if input.Workspace.CurrentDir != "" {
-			if err := os.Chdir(input.Workspace.CurrentDir); err == nil {
-				statusline.SetContext(
-					input.TranscriptPath,
-					input.Workspace.CurrentDir,
-					input.Model.DisplayName,
-				)
-			}
+			_ = os.Chdir(input.Workspace.CurrentDir) // Try to change dir, but continue regardless
 		}
+
+		// Extract context window data
+		var contextWindowSize, contextInputTokens, contextCacheTokens int
+		if input.ContextWindow != nil {
+			contextWindowSize = input.ContextWindow.ContextWindowSize
+			contextInputTokens = input.ContextWindow.CurrentUsage.InputTokens
+			contextCacheTokens = input.ContextWindow.CurrentUsage.CacheCreationInputTokens + input.ContextWindow.CurrentUsage.CacheReadInputTokens
+		}
+
+		// Always set context (even if directory change failed)
+		statusline.SetContextWithWindow(
+			input.TranscriptPath,
+			input.Workspace.CurrentDir,
+			input.Model.DisplayName,
+			contextWindowSize,
+			contextInputTokens,
+			contextCacheTokens,
+		)
 	}
 
 	// Create statusline with registry
@@ -153,6 +165,14 @@ func runStatuslineMode() error {
 
 	// Create sections from config
 	enabledSections := cfg.GetEnabledSections()
+
+	// Debug output
+	if os.Getenv("DEBUG") == "1" {
+		fmt.Fprintf(os.Stderr, "DEBUG: Enabled sections: %v\n", enabledSections)
+		fmt.Fprintf(os.Stderr, "DEBUG: Layout.Responsive.Enabled=%v\n", cfg.Layout.Responsive.Enabled)
+		fmt.Fprintf(os.Stderr, "DEBUG: Layout.Lines=%d\n", len(cfg.Layout.Lines))
+	}
+
 	for _, sectionName := range enabledSections {
 		section, err := registry.Create(sectionName, cfg)
 		if err != nil {

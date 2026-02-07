@@ -85,7 +85,7 @@ func (b *BeadsSection) formatIssue(issue *beads.Issue) string {
 		parts = append(parts, progress)
 	}
 
-	return strings.Join(parts, " | ")
+	return strings.Join(parts, " • ")
 }
 
 // extractTodoProgress extracts todo progress from issue description
@@ -157,7 +157,7 @@ func (b *BeadsSection) formatSummary() string {
 		parts = append(parts, fmt.Sprintf("✓ %d closed", closedCount))
 	}
 
-	return strings.Join(parts, " | ")
+	return strings.Join(parts, " • ")
 }
 
 // getStatusSection returns the git status section

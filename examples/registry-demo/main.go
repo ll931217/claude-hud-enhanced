@@ -98,3 +98,11 @@ func (c *customSection) Order() int {
 func (c *customSection) Name() string {
 	return c.name
 }
+
+func (c *customSection) Priority() registry.Priority {
+	return registry.PriorityImportant
+}
+
+func (c *customSection) MinWidth() int {
+	return 0
+}

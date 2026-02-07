@@ -9,16 +9,17 @@ A sophisticated statusline plugin for Claude Code sessions, providing real-time 
 ## Features
 
 - **Claude Code Integration**: Deep integration with Claude Code session transcripts
-- **Color-Coded Context Bar**: Visual progress bar with green/yellow/red thresholds
+- **Context Progress Bar**: Visual progress bar with color-coded thresholds (yellow/red at high usage)
 - **Token Breakdown**: Shows detailed token usage at high context (≥85%)
-- **Auto-Compact Buffer**: Accounts for 128k token buffer in calculations
-- **Beads Issue Tracking**: Real-time display of your beads issue tracker status
-- **Worktrunk Support**: Visualize your git worktree management
-- **Git Status**: Show branch, dirty state, ahead/behind, and worktree info
-- **System Monitoring**: CPU, memory, and disk usage at a glance
-- **Todo Tracking**: Display todo progress from your session
+- **Responsive Layout**: Adapts to terminal size with priority-based progressive disclosure
+- **Configurable Layout**: Each line is fully customizable with sections and separators
+- **Tool Usage Tracking**: Display recently used tools with recency sorting
 - **Session Info**: Duration, cost calculation, and model information
-- **Compact Layout**: Optimized 2-line output fits within 80 columns
+- **Todo Tracking**: Display todo progress from your session
+- **Beads Issue Tracking**: Real-time display of your beads issue tracker status
+- **Git Status**: Show branch, dirty state, ahead/behind, and worktree info
+- **Language Detection**: Automatically detects project language with icon
+- **System Monitoring**: CPU, memory, and disk usage (separate sysinfo section)
 - **Auto-Detection**: Works directly with Claude Code without wrapper script
 - **Theming**: Beautiful Catppuccin Mocha color scheme
 - **Nerd Font Icons**: Icon support with ASCII fallback
@@ -78,9 +79,25 @@ Create a configuration file at `~/.config/claude-hud/config.yaml`:
 # Refresh interval in milliseconds (100-5000)
 refresh_interval_ms: 500
 
-# Compact mode (2-line layout vs 4-line layout)
-compact_mode: true
-max_lines: 2
+# Configurable layout system
+layout:
+  # Enable responsive design (adapts to terminal size)
+  responsive:
+    enabled: true
+    small_breakpoint: 80   # Columns < 80: minimal layout
+    medium_breakpoint: 120 # Columns 80-119: balanced layout
+    large_breakpoint: 160  # Columns >= 120: full layout
+
+  # Define each line with sections and separators
+  lines:
+    - sections: [session]
+      separator: " | "
+    - sections: [workspace, status]
+      separator: " | "
+    - sections: [tools]
+      separator: " | "
+    - sections: [sysinfo]
+      separator: " | "
 
 # Section configuration
 sections:
@@ -96,6 +113,12 @@ sections:
   workspace:
     enabled: true
     order: 4
+  tools:
+    enabled: true
+    order: 5
+  sysinfo:
+    enabled: true
+    order: 6
 
 # Color customization (uses Catppuccin Mocha by default)
 colors:
@@ -183,12 +206,15 @@ The binary will automatically read the JSON context from Claude Code's stdin and
 
 Claude Code's statusline supports multiline output, and Claude HUD Enhanced takes advantage of this by displaying:
 
-1. **Session Info**: Duration, cost, tools, agents, todos
-2. **Beads Status**: Open issues, in progress, blocked, current task
-3. **Git Status**: Branch, dirty state, ahead/behind, worktree info
-4. **Workspace**: CPU, RAM, disk, directory, language
+1. **Session Info**: Model, context progress, duration, todos
+2. **Workspace & Git**: Language, directory, branch status
+3. **Tools**: Recently used tools with call counts (max 5)
+4. **System Info**: CPU, RAM, disk usage
 
-Each section appears on its own line for maximum visibility (or 2 lines in compact mode).
+Each section appears on its own line for maximum visibility. The responsive layout adapts to terminal size:
+- **Small (<80 cols)**: Shows essential sections only
+- **Medium (80-119 cols)**: Shows important sections
+- **Large (120+ cols)**: Shows full layout with all sections
 
 #### Testing
 
@@ -224,7 +250,7 @@ sections:
 
 Displays information about your current Claude Code session:
 - Model name (e.g., "glm-4.7", "Claude Opus")
-- Color-coded **context progress bar** (green/yellow/red based on usage)
+- Context progress bar (plain text at low usage, yellow/red at high usage)
 - Token breakdown at high usage (≥85%)
 - Session duration
 - Tool usage activity
@@ -233,21 +259,25 @@ Displays information about your current Claude Code session:
 - Estimated cost
 
 **Context Progress Bar Colors:**
-- 🟢 Green (<70%): Healthy context usage
+- Plain text (<70%): Normal context usage
 - 🟡 Yellow (70-84%): Approaching limit
 - 🔴 Red (≥85%): High usage with token breakdown
 
-Example output (compact 2-line mode):
+Example output (4-line full mode):
 ```
-glm-4.7 1h41m | [████░░░░░░]60% | ◐ Implement feature X
-☍ 40 total | ✓ 40 closed | 🌿 main * 2 changes ↓25
-
-~/claude-hud-enhanced | 🐹 Go | 💻 1% | 🎯 12.6/23GB | 💾 10GB
+glm-4.7 2h15m | █████████░ 92% (in: 185k, cache: 12k) | ◐ Implement feature X | $0.45
 ```
 
-At high context usage (≥85%), shows token breakdown:
+### Tools Section
+
+Displays recently used Claude Code tools with call counts (max 5 tools):
+- Tool name with usage count
+- Sorted by most recently used
+- MCP plugin names are shortened for readability
+
+Example output:
 ```
-glm-4.7 2h15m | [█████████░]92% (in: 185k, cache: 12k) | $0.45
+Read×12 | Edit×8 | Bash×5 | Grep×3 | Ask×2
 ```
 
 ### Beads Section
@@ -284,16 +314,25 @@ Example:
 
 ### Workspace Section
 
-System and workspace information:
+Workspace information:
+- Detected programming language (with icon)
 - Current directory (truncated for fit)
-- Detected programming language
+
+Example:
+```
+🐹 Go | ~/claude-hud-enhanced
+```
+
+### SysInfo Section
+
+System resource usage:
 - CPU usage percentage
 - Memory usage (used/total)
 - Disk available space
 
 Example:
 ```
-~/claude-hud-enhanced | 🐹 Go | 💻 1% | 🎯 12.6/23GB | 💾 10GB
+💻 15% | 🎯 8.2/32GB | 💾 45GB
 ```
 
 ## Development
@@ -332,6 +371,28 @@ make lint
 
 ## Configuration
 
+### Layout System
+
+The layout system allows you to customize which sections appear on each line:
+
+```yaml
+layout:
+  responsive:
+    enabled: true
+    small_breakpoint: 80
+    medium_breakpoint: 120
+    large_breakpoint: 160
+  lines:
+    - sections: [session]
+      separator: " | "
+    - sections: [workspace, status]
+      separator: " | "
+    - sections: [tools]
+      separator: " | "
+    - sections: [sysinfo]
+      separator: " | "
+```
+
 ### Section Order
 
 Control the order and visibility of sections:
@@ -341,14 +402,20 @@ sections:
   session:
     enabled: true
     order: 1
-  beads:
+  tools:
     enabled: true
     order: 2
-  status:
-    enabled: false  # Disable this section
-  workspace:
+  beads:
     enabled: true
     order: 3
+  status:
+    enabled: true
+    order: 4
+  workspace:
+    enabled: true
+    order: 5
+  sysinfo:
+    enabled: false  # Disable this section
 ```
 
 ### Colors
@@ -376,6 +443,7 @@ refresh_interval_ms: 500  # Update every 500ms
 
 ## Architecture
 
+- **Responsive Layout**: Adapts to terminal size with priority-based progressive disclosure
 - **Streaming JSONL Parser**: Efficient transcript parsing with line-by-line processing
 - **Factory Pattern**: Section registry for dynamic section creation
 - **Graceful Degradation**: Continues working when data sources are unavailable

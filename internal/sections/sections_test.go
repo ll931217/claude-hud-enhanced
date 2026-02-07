@@ -12,7 +12,7 @@ func TestSectionRegistry(t *testing.T) {
 	t.Run("List returns all registered sections", func(t *testing.T) {
 		sections := registry.List()
 
-		expectedSections := []string{"session", "beads", "status", "workspace"}
+		expectedSections := []string{"session", "beads", "status", "workspace", "tools", "sysinfo"}
 
 		for _, expected := range expectedSections {
 			found := false
@@ -30,7 +30,7 @@ func TestSectionRegistry(t *testing.T) {
 
 	// Test creating sections
 	t.Run("Create returns valid sections", func(t *testing.T) {
-		testCases := []string{"session", "beads", "status", "workspace"}
+		testCases := []string{"session", "beads", "status", "workspace", "tools", "sysinfo"}
 
 		for _, sectionType := range testCases {
 			section, err := registry.Create(sectionType, nil)
@@ -48,13 +48,16 @@ func TestSectionRegistry(t *testing.T) {
 				t.Errorf("Expected section %q to be enabled by default", sectionType)
 			}
 
-			// Order should be set by default config (1, 2, 3, or 4)
-			if section.Order() < 1 || section.Order() > 4 {
-				t.Errorf("Expected section %q to have order between 1-4, got %d", sectionType, section.Order())
+			// Order should be set by default config (1, 2, 3, 4, 5, or 6)
+			if section.Order() < 1 || section.Order() > 6 {
+				t.Errorf("Expected section %q to have order between 1-6, got %d", sectionType, section.Order())
 			}
 
+			// Note: 'tools' and 'sysinfo' sections may return empty strings in test environment
+			// (no transcript file for tools, monitor may fail to update in test)
 			rendered := section.Render()
-			if rendered == "" {
+			allowEmpty := (sectionType == "tools" || sectionType == "sysinfo")
+			if rendered == "" && !allowEmpty {
 				t.Errorf("Expected section %q to render non-empty string", sectionType)
 			}
 		}
@@ -126,4 +129,12 @@ func (m *mockSection) Order() int {
 
 func (m *mockSection) Name() string {
 	return m.name
+}
+
+func (m *mockSection) Priority() registry.Priority {
+	return registry.PriorityImportant
+}
+
+func (m *mockSection) MinWidth() int {
+	return 0
 }

@@ -305,6 +305,8 @@ func TestGetEnabledSections(t *testing.T) {
 	// Disable some sections
 	config.Sections.Beads.Enabled = false
 	config.Sections.Workspace.Enabled = false
+	config.Sections.Tools.Enabled = false
+	config.Sections.SysInfo.Enabled = false
 
 	enabled := config.GetEnabledSections()
 
@@ -326,12 +328,14 @@ func TestGetEnabledSections_CustomOrder(t *testing.T) {
 	// Change order
 	config.Sections.Session.Order = 3
 	config.Sections.Beads.Order = 1
-	config.Sections.Status.Order = 4
+	config.Sections.Status.Order = 5
 	config.Sections.Workspace.Order = 2
+	config.Sections.Tools.Order = 4
+	config.Sections.SysInfo.Order = 6
 
 	enabled := config.GetEnabledSections()
 
-	expected := []string{"beads", "workspace", "session", "status"}
+	expected := []string{"beads", "workspace", "session", "tools", "status", "sysinfo"}
 	if len(enabled) != len(expected) {
 		t.Fatalf("Expected %d enabled sections, got %d", len(expected), len(enabled))
 	}

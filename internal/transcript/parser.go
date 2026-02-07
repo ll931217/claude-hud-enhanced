@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"sort"
 	"strings"
 	"sync"
 	"time"
@@ -192,8 +193,14 @@ func (p *Parser) parseLine(line []byte) error {
 		event.Timestamp = tool.Timestamp
 		event.ToolUse = &tool.ToolUse
 
-		// Track tool activity
+		// Track tool activity with timestamp
 		if tool.ToolUse.ToolUseID != "" {
+			// Parse timestamp for recency tracking
+			if tool.Timestamp != "" {
+				if t, err := time.Parse(time.RFC3339Nano, tool.Timestamp); err == nil {
+					tool.ToolUse.LastUsed = t
+				}
+			}
 			p.toolActivity[tool.ToolUse.ToolUseID] = &tool.ToolUse
 		}
 
@@ -556,4 +563,50 @@ func (p *Parser) GetDuration() string {
 		}
 		return fmt.Sprintf("%dd", days)
 	}
+}
+
+// GetToolsByRecency returns tools aggregated by name, sorted by most recently used
+func (p *Parser) GetToolsByRecency(maxTools int) []ToolUsage {
+	p.mu.RLock()
+	defer p.mu.RUnlock()
+
+	// Aggregate tools by name
+	toolMap := make(map[string]*ToolUsage)
+
+	for _, tool := range p.toolActivity {
+		if tool.Name == "" {
+			continue
+		}
+
+		if existing, ok := toolMap[tool.Name]; ok {
+			existing.Count++
+			if tool.LastUsed.After(existing.LastUsed) {
+				existing.LastUsed = tool.LastUsed
+			}
+		} else {
+			toolMap[tool.Name] = &ToolUsage{
+				Name:     tool.Name,
+				Count:    1,
+				LastUsed: tool.LastUsed,
+			}
+		}
+	}
+
+	// Convert to slice and sort by recency
+	result := make([]ToolUsage, 0, len(toolMap))
+	for _, usage := range toolMap {
+		result = append(result, *usage)
+	}
+
+	// Sort by last used time (most recent first)
+	sort.Slice(result, func(i, j int) bool {
+		return result[i].LastUsed.After(result[j].LastUsed)
+	})
+
+	// Limit to maxTools
+	if maxTools > 0 && len(result) > maxTools {
+		result = result[:maxTools]
+	}
+
+	return result
 }
