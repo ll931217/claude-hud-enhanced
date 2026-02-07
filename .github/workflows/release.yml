@@ -1,28 +1,104 @@
 name: Release
 
 on:
-  workflow_run:
-    workflows: [Build]
-    types: [completed]
-    branches: [main, tags]
+  push:
+    tags:
+      - 'v*.*.*'
   workflow_dispatch:
     inputs:
-      pre_release:
-        description: 'Mark as pre-release'
-        required: false
-        default: false
-        type: boolean
+      tag:
+        description: 'Tag to release (e.g., v0.1.2)'
+        required: true
+        type: string
 
 permissions:
   contents: write
 
 jobs:
+  build-and-release:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-latest
+            goos: linux
+            goarch: amd64
+          - os: ubuntu-latest
+            goos: linux
+            goarch: arm64
+          - os: macos-latest
+            goos: darwin
+            goarch: amd64
+          - os: macos-latest
+            goos: darwin
+            goarch: arm64
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.25'
+          cache: true
+
+      - name: Download dependencies
+        run: go mod download
+
+      - name: Set build variables
+        shell: bash
+        run: |
+          # Get version from tag or input
+          if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+            VERSION=${{ inputs.tag }}
+          else
+            VERSION=${GITHUB_REF_NAME}
+          fi
+
+          GIT_COMMIT=${GITHUB_SHA}
+          BUILD_DATE=$(date -u '+%Y-%m-%d_%H:%M:%S')
+          GO_VERSION=$(go version | cut -d' ' -f3)
+
+          echo "VERSION=${VERSION}" >> $GITHUB_ENV
+          echo "GIT_COMMIT=${GIT_COMMIT:0:7}" >> $GITHUB_ENV
+          echo "BUILD_DATE=${BUILD_DATE}" >> $GITHUB_ENV
+          echo "GO_VERSION=${GO_VERSION}" >> $GITHUB_ENV
+          echo "GOOS=${{ matrix.goos }}" >> $GITHUB_ENV
+          echo "GOARCH=${{ matrix.goarch }}" >> $GITHUB_ENV
+
+          # Determine output filename
+          BINARY_NAME="claude-hud-${{ matrix.goos }}-${{ matrix.goarch }}"
+          echo "BINARY_NAME=${BINARY_NAME}" >> $GITHUB_ENV
+
+          # Archive name
+          ARCHIVE="claude-hud-${VERSION}-${{ matrix.goos }}-${{ matrix.goarch }}.tar.gz"
+          echo "ARCHIVE=${ARCHIVE}" >> $GITHUB_ENV
+
+      - name: Run tests
+        run: go test -short -timeout 5m ./...
+
+      - name: Build binary
+        shell: bash
+        run: |
+          go build -trimpath -ldflags "-X github.com/ll931217/claude-hud-enhanced/internal/version.Version=${VERSION} -X github.com/ll931217/claude-hud-enhanced/internal/version.GitCommit=${GIT_COMMIT} -X github.com/ll931217/claude-hud-enhanced/internal/version.BuildDate=${BUILD_DATE} -X github.com/ll931217/claude-hud-enhanced/internal/version.GoVersion=${GO_VERSION}" -o "${BINARY_NAME}" ./cmd/claude-hud
+
+      - name: Create archive
+        shell: bash
+        run: |
+          tar -czf "${ARCHIVE}" "${BINARY_NAME}"
+
+      - name: Upload archive (for release job)
+        uses: actions/upload-artifact@v4
+        with:
+          name: archive-${{ matrix.goos }}-${{ matrix.goarch }}
+          path: ${{ env.ARCHIVE }}
+          retention-days: 1
+
   create-release:
-    # Only run after build workflow succeeds on a tag
-    if: |
-      github.event.workflow_run.conclusion == 'success' &&
-      startsWith(github.event.workflow_run.head_branch, 'v') &&
-      github.event.workflow_run.event == 'push'
+    needs: build-and-release
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -30,20 +106,22 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Download all archives from build workflow
+      - name: Download all archives
         uses: actions/download-artifact@v4
         with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          run-id: ${{ github.event.workflow_run.id }}
           pattern: archive-*
           path: archives
           merge-multiple: true
 
-      - name: Determine version from tag
+      - name: Determine version
         run: |
-          # Extract tag name from the workflow run
-          TAG=${{ github.event.workflow_run.head_branch }}
-          echo "VERSION=${TAG}" >> $GITHUB_ENV
+          # Get version from tag or input
+          if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+            VERSION=${{ inputs.tag }}
+          else
+            VERSION=${GITHUB_REF_NAME}
+          fi
+          echo "VERSION=${VERSION}" >> $GITHUB_ENV
 
       - name: Generate release notes
         run: |
@@ -65,15 +143,8 @@ jobs:
       - name: Create GitHub Release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          PRE_RELEASE: ${{ github.event_name == 'workflow_dispatch' && inputs.pre_release || 'false' }}
         run: |
-          FLAGS=()
-          if [ "${PRE_RELEASE}" = "true" ]; then
-            FLAGS+=("--prerelease")
-          fi
-
           gh release create "${VERSION}" \
             archives/* \
             --title "${VERSION}" \
-            --notes-file release_notes.txt \
-            "${FLAGS[@]}"
+            --notes-file release_notes.txt
