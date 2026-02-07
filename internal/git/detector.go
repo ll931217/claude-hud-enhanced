@@ -222,7 +222,7 @@ func (d *Detector) getStatusCounts(ctx context.Context, status *Status) error {
 
 // getAheadBehind gets the ahead/behind count for the current branch
 func (d *Detector) getAheadBehind(ctx context.Context) (ahead, behind int, err error) {
-	cmd := exec.CommandContext(ctx, "git", "rev-list", "--left-right", "--count", "HEAD", "@{u}")
+	cmd := exec.CommandContext(ctx, "git", "rev-list", "--left-right", "--count", "HEAD...@{u}")
 	cmd.Dir = d.repoPath
 	output, err := cmd.Output()
 	if err != nil {

@@ -32,6 +32,7 @@ type Monitor struct {
 	cpu           CPUInfo
 	memory        MemoryInfo
 	disk          DiskInfo
+	fd            FDInfo
 	currentDir    string
 	language      string
 }
@@ -57,6 +58,11 @@ type DiskInfo struct {
 	Available uint64
 	Percent   float64
 	Path      string
+}
+
+// FDInfo contains file descriptor information
+type FDInfo struct {
+	Count int
 }
 
 // NewMonitor creates a new system monitor
@@ -92,6 +98,11 @@ func (m *Monitor) Update() error {
 			m.disk = disk
 		}
 
+		// Update File Descriptors
+		if fd, err := getFDCount(); err == nil {
+			m.fd = fd
+		}
+
 		// Update current directory
 		if cwd, err := os.Getwd(); err == nil {
 			m.currentDir = cwd
@@ -124,6 +135,13 @@ func (m *Monitor) GetDisk() DiskInfo {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
 	return m.disk
+}
+
+// GetFD returns the current file descriptor count
+func (m *Monitor) GetFD() FDInfo {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	return m.fd
 }
 
 // GetCurrentDir returns the current working directory
@@ -164,10 +182,7 @@ func (m *Monitor) FormatMemoryDisplay() string {
 		return ""
 	}
 
-	usedGB := float64(m.memory.Used) / 1024 / 1024 / 1024
-	totalGB := float64(m.memory.Total) / 1024 / 1024 / 1024
-
-	return fmt.Sprintf("RAM %.1f/%.0fGB", usedGB, totalGB)
+	return fmt.Sprintf("RAM %.0f%%", m.memory.Percent)
 }
 
 // FormatDiskDisplay formats disk usage for display
@@ -176,9 +191,16 @@ func (m *Monitor) FormatDiskDisplay() string {
 		return ""
 	}
 
-	freeGB := float64(m.disk.Available) / 1024 / 1024 / 1024
+	return fmt.Sprintf("DISK %.0f%%", m.disk.Percent)
+}
 
-	return fmt.Sprintf("DISK %.0fGB", freeGB)
+// FormatFDDisplay formats file descriptor count for display
+func (m *Monitor) FormatFDDisplay() string {
+	if m.fd.Count == 0 {
+		return ""
+	}
+
+	return fmt.Sprintf("FD %d", m.fd.Count)
 }
 
 // FormatDirDisplay formats the current directory for display
@@ -442,6 +464,54 @@ func getDiskUsage() (DiskInfo, error) {
 		Available: available,
 		Percent:   percent,
 		Path:      cwd,
+	}, nil
+}
+
+// getFDCount retrieves the file descriptor count for the current process
+func getFDCount() (FDInfo, error) {
+	if runtime.GOOS == "linux" {
+		return getLinuxFDCount()
+	} else if runtime.GOOS == "darwin" {
+		return getDarwinFDCount()
+	}
+	return FDInfo{}, nil
+}
+
+// getLinuxFDCount counts file descriptors by counting entries in /proc/self/fd
+func getLinuxFDCount() (FDInfo, error) {
+	fdPath := "/proc/self/fd"
+
+	entries, err := os.ReadDir(fdPath)
+	if err != nil {
+		return FDInfo{}, err
+	}
+
+	return FDInfo{
+		Count: len(entries),
+	}, nil
+}
+
+// getDarwinFDCount counts file descriptors on macOS using lsof
+func getDarwinFDCount() (FDInfo, error) {
+	pid := os.Getpid()
+	cmd := exec.Command("lsof", "-p", fmt.Sprintf("%d", pid))
+	output, err := cmd.Output()
+	if err != nil {
+		return FDInfo{}, err
+	}
+
+	// Count lines (minus header)
+	lines := strings.Split(string(output), "\n")
+	count := 0
+	for _, line := range lines {
+		line = strings.TrimSpace(line)
+		if line != "" && !strings.HasPrefix(line, "COMMAND") {
+			count++
+		}
+	}
+
+	return FDInfo{
+		Count: count,
 	}, nil
 }
 

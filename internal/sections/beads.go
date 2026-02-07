@@ -133,31 +133,11 @@ func getRepoPath() string {
 // formatSummary formats a summary when no active issue
 func (b *BeadsSection) formatSummary() string {
 	// Get counts by status
-	inProgressCount := b.reader.CountByStatus(beads.StatusInProgress)
-	closedCount := b.reader.CountByStatus(beads.StatusClosed)
-
+	openCount := b.reader.CountByStatus(beads.StatusOpen)
 	total := b.reader.Count()
 
-	// If no issues at all
-	if total == 0 {
-		return "[Beads: no issues]"
-	}
-
-	// Build summary
-	var parts []string
-	parts = append(parts, fmt.Sprintf("☍ %d total", total))
-
-	if inProgressCount > 0 {
-		parts = append(parts, fmt.Sprintf("↻ %d in progress", inProgressCount))
-	}
-	if openCount := b.reader.CountByStatus(beads.StatusOpen); openCount > 0 {
-		parts = append(parts, fmt.Sprintf("○ %d open", openCount))
-	}
-	if closedCount > 0 {
-		parts = append(parts, fmt.Sprintf("✓ %d closed", closedCount))
-	}
-
-	return strings.Join(parts, " • ")
+	// Format: bd: <OPEN>/<TOTAL>
+	return fmt.Sprintf("bd: %d/%d", openCount, total)
 }
 
 // getStatusSection returns the git status section

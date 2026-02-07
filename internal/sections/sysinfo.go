@@ -54,6 +54,11 @@ func (s *SysInfoSection) Render() string {
 		parts = append(parts, disk)
 	}
 
+	// Add File Descriptor count
+	if fd := s.monitor.FormatFDDisplay(); fd != "" {
+		parts = append(parts, fd)
+	}
+
 	if len(parts) == 0 {
 		return ""
 	}
