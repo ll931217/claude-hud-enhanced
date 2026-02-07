@@ -161,14 +161,14 @@ type Section interface {
 
 **Duration Section** (`internal/sections/duration.go`):
 - Session duration in human-readable format
-- Priority: Important
+- Priority: Essential
 
 **Tools Section** (`internal/sections/tools.go`):
 - Recently used tools with call counts (max 5)
 - Sorted by most recently used
 - MCP plugin names are shortened
 - Integrates with `internal/transcript/` for tool tracking
-- Priority: Optional
+- Priority: Essential
 
 **Beads Section** (`internal/sections/beads.go`):
 - Issue tracker status (total/closed/in-progress)
@@ -317,7 +317,7 @@ glm-4.7 2h15m | █████████░ 92% | ◐ Implement feature X
 
 **Small terminal (<80 cols):**
 ```
-glm-4.7 | █████████░ 92%
+glm-4.7 | █████████░ 92% | Read×12 | Edit×8
 🐹 Go | ~/claude-hud-enhanced
 ```
 

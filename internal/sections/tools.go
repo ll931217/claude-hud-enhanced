@@ -28,7 +28,7 @@ func NewToolsSection(cfg interface{}) (registry.Section, error) {
 	transcriptPath := getTranscriptPath()
 
 	base := NewBaseSection("tools", appConfig)
-	base.SetPriority(registry.PriorityImportant) // Show on medium+ terminals (80+ cols)
+	base.SetPriority(registry.PriorityEssential) // Show on all terminals
 
 	return &ToolsSection{
 		BaseSection: base,

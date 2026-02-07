@@ -120,9 +120,9 @@ Enable responsive design that adapts to terminal size.
 - **Default**: true
 
 When enabled, sections are hidden based on terminal width:
-- Small (<80 cols): Essential sections only (model, context, todos)
-- Medium (80-119 cols): Essential + Important sections (adds git status, workspace)
-- Large (120+ cols): All sections including optional (tools, system info)
+- Small (<80 cols): Essential sections only (model, contextbar, duration, tools)
+- Medium (80-119 cols): Adds important sections (workspace, status, beads)
+- Large (120+ cols): All sections including system info
 
 #### `layout.responsive.breakpoints`
 

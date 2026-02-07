@@ -212,9 +212,9 @@ Claude Code's statusline supports multiline output, and Claude HUD Enhanced take
 4. **System Info**: CPU, RAM, disk usage
 
 Each section appears on its own line for maximum visibility. The responsive layout adapts to terminal size:
-- **Small (<80 cols)**: Shows essential sections only
-- **Medium (80-119 cols)**: Shows important sections
-- **Large (120+ cols)**: Shows full layout with all sections
+- **Small (<80 cols)**: Shows essential sections (model, contextbar, duration, tools)
+- **Medium (80-119 cols)**: Adds important sections (workspace, status, beads)
+- **Large (120+ cols)**: Shows full layout including system info
 
 #### Testing
 
