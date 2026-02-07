@@ -111,7 +111,7 @@ func TestParser_ParseFromReader(t *testing.T) {
 	}{
 		{
 			name: "valid tool use",
-			input: `{"type": "tool_use", "tool_use": {"name": "Read", "tool_use_id": "test123"}}` + "\n",
+			input: `{"type": "tool_use", "tool_name": "Read", "timestamp": "2026-01-11T03:26:59.508Z"}` + "\n",
 			expectLines:   1,
 			expectErrors:  false,
 			expectToolUse: true,
@@ -125,9 +125,9 @@ func TestParser_ParseFromReader(t *testing.T) {
 		},
 		{
 			name: "multiple events",
-			input: `{"type": "tool_use", "tool_use": {"name": "Read", "tool_use_id": "t1"}}` + "\n" +
+			input: `{"type": "tool_use", "tool_name": "Read", "timestamp": "2026-01-11T03:26:59.508Z"}` + "\n" +
 				`{"type": "agent_run", "agent_run": {"agent_id": "a1"}}` + "\n" +
-				`{"type": "tool_use", "tool_use": {"name": "Write", "tool_use_id": "t2"}}` + "\n",
+				`{"type": "tool_use", "tool_name": "Write", "timestamp": "2026-01-11T03:27:00.123Z"}` + "\n",
 			expectLines:    3,
 			expectErrors:   false,
 			expectToolUse:  true,
@@ -135,7 +135,7 @@ func TestParser_ParseFromReader(t *testing.T) {
 		},
 		{
 			name: "invalid json - graceful handling",
-			input: `{"type": "tool_use", "tool_use": {invalid}}` + "\n",
+			input: `{"type": "tool_use", "tool_name": {invalid}}` + "\n",
 			expectLines:  1,
 			expectErrors: true,
 		},
@@ -185,8 +185,8 @@ func TestParser_GetLatestEvent(t *testing.T) {
 	ctx := context.Background()
 	p := NewParser("test.jsonl")
 
-	input := `{"type": "tool_use", "tool_use": {"name": "Read", "tool_use_id": "t1"}}` + "\n" +
-		`{"type": "tool_use", "tool_use": {"name": "Write", "tool_use_id": "t2"}}` + "\n"
+	input := `{"type": "tool_use", "tool_name": "Read", "timestamp": "2026-01-11T03:26:59.508Z"}` + "\n" +
+		`{"type": "tool_use", "tool_name": "Write", "timestamp": "2026-01-11T03:27:00.123Z"}` + "\n"
 
 	r := strings.NewReader(input)
 	if err := p.ParseFromReader(ctx, r); err != nil {

@@ -48,9 +48,9 @@ func TestSectionRegistry(t *testing.T) {
 				t.Errorf("Expected section %q to be enabled by default", sectionType)
 			}
 
-			// Order should be set by default config (1-8)
-			if section.Order() < 1 || section.Order() > 8 {
-				t.Errorf("Expected section %q to have order between 1-8, got %d", sectionType, section.Order())
+			// Order is now always 999 (actual ordering determined by layout)
+			if section.Order() != 999 {
+				t.Errorf("Expected section %q to have order 999, got %d", sectionType, section.Order())
 			}
 
 			// Note: Some sections may return empty strings in test environment
@@ -69,8 +69,10 @@ func TestSectionRegistry(t *testing.T) {
 	// Test configuration-based enable/disable (layout-based)
 	t.Run("Create respects layout (not in layout = disabled)", func(t *testing.T) {
 		cfg := &config.Config{}
-		// Empty layout means no sections are enabled
-		cfg.Layout.Lines = []config.LineConfig{}
+		// Layout with only "beads" - "model" should be disabled
+		cfg.Layout.Lines = []config.LineConfig{
+			{Sections: []string{"beads"}, Separator: " | "},
+		}
 
 		section, err := registry.Create("model", cfg)
 		if err != nil {
