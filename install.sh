@@ -52,7 +52,6 @@ detect_platform() {
 
 # Get latest release version
 get_latest_version() {
-    print_msg "$BLUE" "Fetching latest release version..."
     local version
     version=$(curl -s "https://api.github.com/repos/ll931217/claude-hud-enhanced/releases/latest" | grep '"tag_name"' | sed -E 's/.*"([^"]+)".*/\1/')
 
