@@ -1,36 +1,27 @@
 name: Build
 
 on:
+  workflow_run:
+    workflows: [Test]
+    types: [completed]
+    branches: [tags]
   workflow_dispatch:
-  push:
-    branches: [main]
+    inputs:
+      tag:
+        description: 'Tag to build (e.g., v0.1.2)'
+        required: true
+        type: string
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
-  test:
-    name: Test
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Set up Go
-        uses: actions/setup-go@v5
-        with:
-          go-version: "1.25"
-          cache: true
-
-      - name: Download dependencies
-        run: go mod download
-
-      - name: Run tests
-        run: go test -short -timeout 5m ./...
-
   build:
     name: Build
-    needs: test
+    # Only run after test succeeds on a tag push
+    if: |
+      github.event.workflow_run.conclusion == 'success' &&
+      startsWith(github.event.workflow_run.head_branch, 'v')
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
@@ -47,6 +38,7 @@ jobs:
           - os: macos-latest
             goos: darwin
             goarch: arm64
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -54,7 +46,7 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
-          go-version: "1.25"
+          go-version: '1.25'
           cache: true
 
       - name: Download dependencies
@@ -63,7 +55,13 @@ jobs:
       - name: Set build variables
         shell: bash
         run: |
-          VERSION=${{ github.ref_type == 'tag' && github.ref_name || 'dev' }}
+          # Get version from tag
+          if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+            VERSION=${{ inputs.tag }}
+          else
+            VERSION=${{ github.event.workflow_run.head_branch }}
+          fi
+
           GIT_COMMIT=${{ github.sha }}
           BUILD_DATE=$(date -u '+%Y-%m-%d_%H:%M:%S')
           GO_VERSION=$(go version | cut -d' ' -f3)
@@ -79,54 +77,23 @@ jobs:
           BINARY_NAME="claude-hud-${{ matrix.goos }}-${{ matrix.goarch }}"
           echo "BINARY_NAME=${BINARY_NAME}" >> $GITHUB_ENV
 
+          # Archive name
+          ARCHIVE="claude-hud-${VERSION}-${{ matrix.goos }}-${{ matrix.goarch }}.tar.gz"
+          echo "ARCHIVE=${ARCHIVE}" >> $GITHUB_ENV
+
       - name: Build binary
         shell: bash
         run: |
           go build -trimpath -ldflags "-X github.com/ll931217/claude-hud-enhanced/internal/version.Version=${VERSION} -X github.com/ll931217/claude-hud-enhanced/internal/version.GitCommit=${GIT_COMMIT} -X github.com/ll931217/claude-hud-enhanced/internal/version.BuildDate=${BUILD_DATE} -X github.com/ll931217/claude-hud-enhanced/internal/version.GoVersion=${GO_VERSION}" -o "${BINARY_NAME}" ./cmd/claude-hud
 
-      - name: Upload binary
-        uses: actions/upload-artifact@v4
-        with:
-          name: ${{ env.BINARY_NAME }}
-          path: ${{ env.BINARY_NAME }}
-
-  create-archives:
-    name: Create Archives
-    needs: build
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        include:
-          - goos: linux
-            goarch: amd64
-          - goos: linux
-            goarch: arm64
-          - goos: darwin
-            goarch: amd64
-          - goos: darwin
-            goarch: arm64
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Download binary
-        uses: actions/download-artifact@v4
-        with:
-          name: claude-hud-${{ matrix.goos }}-${{ matrix.goarch }}
-          path: .
-
       - name: Create archive
         shell: bash
         run: |
-          VERSION=${{ github.ref_type == 'tag' && github.ref_name || 'dev' }}
-
-          ARCHIVE="claude-hud-${VERSION}-${{ matrix.goos }}-${{ matrix.goarch }}.tar.gz"
-          tar -czf "${ARCHIVE}" claude-hud*
-
-          echo "ARCHIVE=${ARCHIVE}" >> $GITHUB_ENV
+          tar -czf "${ARCHIVE}" "${BINARY_NAME}"
 
       - name: Upload archive
         uses: actions/upload-artifact@v4
         with:
           name: archive-${{ matrix.goos }}-${{ matrix.goarch }}
           path: ${{ env.ARCHIVE }}
+          retention-days: 1
