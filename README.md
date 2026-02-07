@@ -395,9 +395,9 @@ refresh_interval_ms: 300  # Update every 300ms
 
 ## Documentation
 
-- [Section Registry Implementation](docs/section-registry-implementation.md)
-- [Statusline Implementation](STATUSLINE_IMPLEMENTATION.md)
-- [Examples](examples/)
+- [Configuration Guide](docs/CONFIGURATION.md)
+- [Installation Guide](docs/INSTALLATION.md)
+- [Usage Guide](docs/USAGE.md)
 
 ## Contributing
 
