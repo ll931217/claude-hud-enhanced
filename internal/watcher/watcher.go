@@ -167,18 +167,27 @@ func (w *Watcher) fsnotifyEventLoop() {
 
 	w.mu.RLock()
 	ctx := w.ctx
+	fsw := w.fsnotifyWatcher
 	w.mu.RUnlock()
+
+	defer func() {
+		if fsw != nil {
+			fsw.Close()
+		}
+	}()
 
 	for {
 		select {
 		case <-ctx.Done():
 			return
-		case event, ok := <-w.fsnotifyWatcher.Events:
+		case <-w.stopChan:
+			return
+		case event, ok := <-fsw.Events:
 			if !ok {
 				return
 			}
 			w.handleFsnotifyEvent(event)
-		case err, ok := <-w.fsnotifyWatcher.Errors:
+		case err, ok := <-fsw.Errors:
 			if !ok {
 				return
 			}
@@ -336,15 +345,17 @@ func (w *Watcher) Stop() {
 		w.pollingTicker.Stop()
 		w.pollingTicker = nil
 	}
-	// Close fsnotify watcher
-	if w.fsnotifyWatcher != nil {
-		w.fsnotifyWatcher.Close()
-		w.fsnotifyWatcher = nil
-	}
+	// Note: fsnotifyWatcher is closed by fsnotifyEventLoop goroutine
+	// We just nil out the reference here after waiting for goroutines
 	w.mu.Unlock()
 
 	// Wait for all goroutines to finish
 	w.wg.Wait()
+
+	// Now safe to nil out the fsnotify watcher
+	w.mu.Lock()
+	w.fsnotifyWatcher = nil
+	w.mu.Unlock()
 
 	// Close channels
 	close(w.eventChan)

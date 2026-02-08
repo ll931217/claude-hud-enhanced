@@ -31,7 +31,7 @@ func TestDefaultConfig(t *testing.T) {
 
 	// Check layout has expected sections in first line
 	firstLine := config.Layout.Lines[0]
-	expectedFirstLineSections := []string{"model", "contextbar", "duration"}
+	expectedFirstLineSections := []string{"model", "contextbar", "duration", "beads"}
 	if len(firstLine.Sections) != len(expectedFirstLineSections) {
 		t.Errorf("Expected first line to have %d sections, got %d", len(expectedFirstLineSections), len(firstLine.Sections))
 	}
