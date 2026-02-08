@@ -11,11 +11,11 @@ import (
 
 // MockSection is a test implementation of registry.Section
 type MockSection struct {
-	name     string
-	enabled  bool
-	order    int
-	content  string
-	panicOn  string // if set, will panic when this content is set
+	name    string
+	enabled bool
+	order   int
+	content string
+	panicOn string // if set, will panic when this content is set
 }
 
 func (m *MockSection) Render() string {

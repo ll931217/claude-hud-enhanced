@@ -11,12 +11,12 @@ type RecoveryHandler func(panicValue interface{}, stackTrace []byte)
 
 // PanicRecovery manages panic recovery with custom handlers.
 type PanicRecovery struct {
-	mu              sync.Mutex
-	handler         RecoveryHandler
-	logByDefault    bool
-	enabled         bool
-	recoveryCount   int
-	maxRecoveries   int
+	mu            sync.Mutex
+	handler       RecoveryHandler
+	logByDefault  bool
+	enabled       bool
+	recoveryCount int
+	maxRecoveries int
 }
 
 // NewPanicRecovery creates a new panic recovery manager.

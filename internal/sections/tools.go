@@ -56,16 +56,32 @@ func (t *ToolsSection) Render() string {
 		return "" // Hide section on parse error
 	}
 
-	// Get tools by recency (max 5)
-	tools := parser.GetToolsByRecency(5)
-	if len(tools) == 0 {
+	// Get running and completed tools
+	running, completed := parser.GetToolsByStatus(2, 4)
+	if len(running) == 0 && len(completed) == 0 {
 		return "" // Hide section when no tools used yet
 	}
 
 	var parts []string
-	for _, tool := range tools {
+
+	// Display running tools first (max 2) with ◐ indicator
+	for _, tool := range running {
 		name := shortenToolName(tool.Name)
-		parts = append(parts, fmt.Sprintf("%s×%d", name, tool.Count))
+		if tool.Target != "" {
+			parts = append(parts, fmt.Sprintf("◐ %s: %s", name, tool.Target))
+		} else {
+			parts = append(parts, fmt.Sprintf("◐ %s", name))
+		}
+	}
+
+	// Display completed tools (max 4) with ✓ and count
+	for _, tool := range completed {
+		name := shortenToolName(tool.Name)
+		if tool.Count > 1 {
+			parts = append(parts, fmt.Sprintf("✓ %s×%d", name, tool.Count))
+		} else {
+			parts = append(parts, fmt.Sprintf("✓ %s", name))
+		}
 	}
 
 	return strings.Join(parts, " | ")
@@ -76,21 +92,21 @@ func mapToOfficialToolName(name string) string {
 	// Define mapping of internal names to official names
 	officialNames := map[string]string{
 		// Core tools (capitalize)
-		"read":    "Read",
-		"edit":    "Edit",
-		"write":   "Write",
-		"bash":    "Bash",
-		"glob":    "Glob",
-		"grep":    "Grep",
+		"read":  "Read",
+		"edit":  "Edit",
+		"write": "Write",
+		"bash":  "Bash",
+		"glob":  "Glob",
+		"grep":  "Grep",
 
 		// Task-related tools
-		"question":         "AskUserQuestion",
-		"todowrite":        "TaskCreate",
-		"taskupdate":       "TaskUpdate",
-		"taskget":          "TaskGet",
-		"tasklist":         "TaskList",
-		"taskoutput":       "TaskOutput",
-		"delegate_task":    "Task",
+		"question":          "AskUserQuestion",
+		"todowrite":         "TaskCreate",
+		"taskupdate":        "TaskUpdate",
+		"taskget":           "TaskGet",
+		"tasklist":          "TaskList",
+		"taskoutput":        "TaskOutput",
+		"delegate_task":     "Task",
 		"background_output": "TaskOutput",
 
 		// Other tools
@@ -155,8 +171,8 @@ func shortenToolName(name string) string {
 
 	// Shorten common Claude Code tools
 	shortNames := map[string]string{
-		"computer_20250124": "computer",
-		"cli":               "cli",
+		"computer_20250124":    "computer",
+		"cli":                  "cli",
 		"text_editor_20250124": "editor",
 	}
 

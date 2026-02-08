@@ -12,7 +12,7 @@ import (
 type BreakpointLevel int
 
 const (
-	BreakpointSmall  BreakpointLevel = iota
+	BreakpointSmall BreakpointLevel = iota
 	BreakpointMedium
 	BreakpointLarge
 )

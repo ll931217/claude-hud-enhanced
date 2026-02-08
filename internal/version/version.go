@@ -31,9 +31,9 @@ func FullVersionInfo() string {
 // BuildInfo returns complete build information
 func BuildInfo() map[string]string {
 	return map[string]string{
-		"version":   Version,
-		"commit":    GitCommit,
-		"built_at":  BuildDate,
+		"version":    Version,
+		"commit":     GitCommit,
+		"built_at":   BuildDate,
 		"go_version": GoVersion,
 	}
 }

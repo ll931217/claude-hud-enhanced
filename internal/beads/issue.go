@@ -8,20 +8,20 @@ import (
 type IssueStatus string
 
 const (
-	StatusOpen        IssueStatus = "open"
-	StatusInProgress  IssueStatus = "in_progress"
-	StatusClosed      IssueStatus = "closed"
-	StatusBlocked     IssueStatus = "blocked"
+	StatusOpen       IssueStatus = "open"
+	StatusInProgress IssueStatus = "in_progress"
+	StatusClosed     IssueStatus = "closed"
+	StatusBlocked    IssueStatus = "blocked"
 )
 
 // IssueType represents the type of issue
 type IssueType string
 
 const (
-	TypeTask   IssueType = "task"
-	TypeBug    IssueType = "bug"
+	TypeTask    IssueType = "task"
+	TypeBug     IssueType = "bug"
 	TypeFeature IssueType = "feature"
-	TypeEpic   IssueType = "epic"
+	TypeEpic    IssueType = "epic"
 )
 
 // Priority represents the priority level (0-4 or P0-P4)
@@ -37,7 +37,7 @@ const (
 
 // String returns the priority as a string (P0-P4)
 func (p Priority) String() string {
-	return "P" + string(rune('0' + p))
+	return "P" + string(rune('0'+p))
 }
 
 // Icon returns the status icon for an issue
@@ -67,16 +67,16 @@ type Dependency struct {
 
 // Issue represents a single issue from beads
 type Issue struct {
-	ID          string        `json:"id"`
-	Title       string        `json:"title"`
-	Description string        `json:"description,omitempty"`
-	Status      IssueStatus   `json:"status"`
-	Priority    Priority      `json:"priority"`
-	IssueType   IssueType     `json:"issue_type"`
-	CreatedAt   time.Time     `json:"created_at"`
-	CreatedBy   string        `json:"created_by,omitempty"`
-	UpdatedAt   time.Time     `json:"updated_at"`
-	Labels      []string      `json:"labels,omitempty"`
+	ID           string       `json:"id"`
+	Title        string       `json:"title"`
+	Description  string       `json:"description,omitempty"`
+	Status       IssueStatus  `json:"status"`
+	Priority     Priority     `json:"priority"`
+	IssueType    IssueType    `json:"issue_type"`
+	CreatedAt    time.Time    `json:"created_at"`
+	CreatedBy    string       `json:"created_by,omitempty"`
+	UpdatedAt    time.Time    `json:"updated_at"`
+	Labels       []string     `json:"labels,omitempty"`
 	Dependencies []Dependency `json:"dependencies,omitempty"`
 }
 

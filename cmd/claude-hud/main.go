@@ -6,20 +6,22 @@ import (
 	"fmt"
 	"os"
 	"os/signal"
+	"sync"
 	"syscall"
 
 	"github.com/ll931217/claude-hud-enhanced/internal/config"
 	"github.com/ll931217/claude-hud-enhanced/internal/errors"
 	"github.com/ll931217/claude-hud-enhanced/internal/registry"
+	_ "github.com/ll931217/claude-hud-enhanced/internal/sections" // Register sections via init()
 	"github.com/ll931217/claude-hud-enhanced/internal/statusline"
 	"github.com/ll931217/claude-hud-enhanced/internal/version"
-	_ "github.com/ll931217/claude-hud-enhanced/internal/sections" // Register sections via init()
 )
 
 var (
-	showVersion = flag.Bool("version", false, "Show version information")
-	showBuild   = flag.Bool("build-info", false, "Show detailed build information")
+	showVersion    = flag.Bool("version", false, "Show version information")
+	showBuild      = flag.Bool("build-info", false, "Show detailed build information")
 	statuslineMode = flag.Bool("statusline", false, "Run in Claude Code statusline mode (single shot, multiline output)")
+	debugLogMutex  sync.Mutex
 )
 
 func main() {
@@ -131,6 +133,11 @@ func runStatuslineMode() error {
 		cfg = config.DefaultConfig()
 	}
 
+	// Log stdin input for debugging if debug mode is enabled
+	if cfg.Debug && input != nil {
+		logStdinDebug(input)
+	}
+
 	// Set global context from JSON input
 	if input != nil {
 		// Change to workspace directory if specified
@@ -167,10 +174,11 @@ func runStatuslineMode() error {
 	enabledSections := cfg.GetEnabledSections()
 
 	// Debug output
-	if os.Getenv("DEBUG") == "1" {
+	if cfg.Debug {
 		fmt.Fprintf(os.Stderr, "DEBUG: Enabled sections: %v\n", enabledSections)
 		fmt.Fprintf(os.Stderr, "DEBUG: Layout.Responsive.Enabled=%v\n", cfg.Layout.Responsive.Enabled)
 		fmt.Fprintf(os.Stderr, "DEBUG: Layout.Lines=%d\n", len(cfg.Layout.Lines))
+		fmt.Fprintf(os.Stderr, "DEBUG: Stdin logged to /tmp/claude-hud-debug.log\n")
 	}
 
 	for _, sectionName := range enabledSections {

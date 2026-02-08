@@ -12,12 +12,12 @@ import (
 
 // Config represents the application configuration
 type Config struct {
-	Colors           ColorsConfig   `yaml:"colors"`
-	Layout           LayoutConfig   `yaml:"layout"`
-	RefreshIntervalMs int            `yaml:"refresh_interval_ms"`
-	Debug            bool           `yaml:"debug"`
-	CompactMode      bool           `yaml:"compact_mode"`
-	MaxLines         int            `yaml:"max_lines"`
+	Colors            ColorsConfig `yaml:"colors"`
+	Layout            LayoutConfig `yaml:"layout"`
+	RefreshIntervalMs int          `yaml:"refresh_interval_ms"`
+	Debug             bool         `yaml:"debug"`
+	CompactMode       bool         `yaml:"compact_mode"`
+	MaxLines          int          `yaml:"max_lines"`
 }
 
 // ColorsConfig holds color customization options
@@ -33,15 +33,15 @@ type ColorsConfig struct {
 
 // LayoutConfig holds configuration for custom layouts
 type LayoutConfig struct {
-	Lines      []LineConfig    `yaml:"lines"`
+	Lines      []LineConfig     `yaml:"lines"`
 	Responsive ResponsiveConfig `yaml:"responsive"`
 }
 
 // LineConfig defines sections on a single line with custom separator
 type LineConfig struct {
-	Sections  []string `yaml:"sections"` // Section names in order
+	Sections  []string `yaml:"sections"`  // Section names in order
 	Separator string   `yaml:"separator"` // Custom separator for this line
-	Wrap      bool     `yaml:"wrap"` // Allow wrapping to next line if too long
+	Wrap      bool     `yaml:"wrap"`      // Allow wrapping to next line if too long
 }
 
 // ResponsiveConfig holds settings for responsive behavior
@@ -70,9 +70,9 @@ func defaultConfig() *Config {
 			Muted:     ct.Muted,
 		},
 		RefreshIntervalMs: 300,
-		Debug:            false,
-		CompactMode:      true,
-		MaxLines:         2,
+		Debug:             false,
+		CompactMode:       false,
+		MaxLines:          4,
 	}
 }
 
@@ -279,7 +279,7 @@ func (c *Config) ToYAML() (string, error) {
 	return string(data), nil
 }
 
-// DefaultLayout returns the default 3-line layout configuration
+// DefaultLayout returns the default 4-line layout configuration
 func DefaultLayout() LayoutConfig {
 	return LayoutConfig{
 		Lines: []LineConfig{
@@ -292,8 +292,12 @@ func DefaultLayout() LayoutConfig {
 				Separator: " | ",
 			},
 			{
-				Sections:  []string{"tools", "sysinfo"},
+				Sections:  []string{"tools"},
 				Separator: " | ",
+			},
+			{
+				Sections:  []string{"sysinfo"},
+				Separator: " ",
 			},
 		},
 		Responsive: ResponsiveConfig{

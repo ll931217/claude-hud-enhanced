@@ -276,10 +276,10 @@ func TestSafeRender(t *testing.T) {
 // TestSafeRenderWithDefault tests the SafeRenderWithDefault function
 func TestSafeRenderWithDefault(t *testing.T) {
 	tests := []struct {
-		name        string
-		fn          func() string
-		defaultVal  string
-		expected    string
+		name       string
+		fn         func() string
+		defaultVal string
+		expected   string
 	}{
 		{
 			name:       "successful render",
@@ -949,10 +949,10 @@ func TestPanicRecoveryMaxRecoveries(t *testing.T) {
 // TestSafeGetValue tests SafeGetValue helper in graceful.go
 func TestSafeGetValue(t *testing.T) {
 	tests := []struct {
-		name      string
-		fn        func() string
-		wantErr   bool
-		expected  string
+		name     string
+		fn       func() string
+		wantErr  bool
+		expected string
 	}{
 		{
 			name:     "successful value",
@@ -984,9 +984,9 @@ func TestSafeGetValue(t *testing.T) {
 // TestWithRecoveryWithResult tests WithRecoveryAndResult
 func TestWithRecoveryAndResult(t *testing.T) {
 	tests := []struct {
-		name      string
-		fn        func() (string, error)
-		wantErr   bool
+		name       string
+		fn         func() (string, error)
+		wantErr    bool
 		checkPanic bool
 	}{
 		{
@@ -1008,7 +1008,7 @@ func TestWithRecoveryAndResult(t *testing.T) {
 			fn: func() (string, error) {
 				panic("test panic")
 			},
-			wantErr:   true,
+			wantErr:    true,
 			checkPanic: true,
 		},
 	}

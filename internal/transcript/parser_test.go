@@ -62,14 +62,14 @@ func TestParseEventType(t *testing.T) {
 
 func TestUsageInfo_TotalInput(t *testing.T) {
 	tests := []struct {
-		name string
+		name  string
 		usage UsageInfo
-		want int
+		want  int
 	}{
 		{
 			name: "all tokens",
 			usage: UsageInfo{
-				InputTokens:             1000,
+				InputTokens:              1000,
 				CacheCreationInputTokens: 500,
 				CacheReadInputTokens:     250,
 			},
@@ -83,9 +83,9 @@ func TestUsageInfo_TotalInput(t *testing.T) {
 			want: 1000,
 		},
 		{
-			name: "zero tokens",
+			name:  "zero tokens",
 			usage: UsageInfo{},
-			want: 0,
+			want:  0,
 		},
 	}
 
@@ -110,15 +110,15 @@ func TestParser_ParseFromReader(t *testing.T) {
 		expectAgentRun bool
 	}{
 		{
-			name: "valid tool use",
-			input: `{"type": "tool_use", "tool_name": "Read", "timestamp": "2026-01-11T03:26:59.508Z"}` + "\n",
+			name:          "valid tool use",
+			input:         `{"type": "tool_use", "tool_name": "Read", "timestamp": "2026-01-11T03:26:59.508Z"}` + "\n",
 			expectLines:   1,
 			expectErrors:  false,
 			expectToolUse: true,
 		},
 		{
-			name: "valid agent run",
-			input: `{"type": "agent_run", "agent_run": {"agent_id": "agent1", "agent_name": "test-agent"}}` + "\n",
+			name:           "valid agent run",
+			input:          `{"type": "agent_run", "agent_run": {"agent_id": "agent1", "agent_name": "test-agent"}}` + "\n",
 			expectLines:    1,
 			expectErrors:   false,
 			expectAgentRun: true,
@@ -134,16 +134,16 @@ func TestParser_ParseFromReader(t *testing.T) {
 			expectAgentRun: true,
 		},
 		{
-			name: "invalid json - graceful handling",
-			input: `{"type": "tool_use", "tool_name": {invalid}}` + "\n",
+			name:         "invalid json - graceful handling",
+			input:        `{"type": "tool_use", "tool_name": {invalid}}` + "\n",
 			expectLines:  1,
 			expectErrors: true,
 		},
 		{
-			name:           "empty lines",
-			input:          "\n\n\n",
-			expectLines:    0,
-			expectErrors:   false,
+			name:         "empty lines",
+			input:        "\n\n\n",
+			expectLines:  0,
+			expectErrors: false,
 		},
 	}
 

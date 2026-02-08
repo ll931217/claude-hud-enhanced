@@ -22,12 +22,12 @@ func (i Icon) Fallback() string {
 // Predefined icons for various UI elements
 var (
 	// Git icons
-	GitBranch    = Icon{NerdFont: "", ASCII: "branch"}
-	GitWorktree  = Icon{NerdFont: "🌿", ASCII: "worktree"}
-	GitDirty     = Icon{NerdFont: "", ASCII: "*"}
-	GitAhead     = Icon{NerdFont: "↑", ASCII: "ahead"}
-	GitBehind    = Icon{NerdFont: "↓", ASCII: "behind"}
-	GitStash     = Icon{NerdFont: "≡", ASCII: "stash"}
+	GitBranch   = Icon{NerdFont: "", ASCII: "branch"}
+	GitWorktree = Icon{NerdFont: "🌿", ASCII: "worktree"}
+	GitDirty    = Icon{NerdFont: "", ASCII: "*"}
+	GitAhead    = Icon{NerdFont: "↑", ASCII: "ahead"}
+	GitBehind   = Icon{NerdFont: "↓", ASCII: "behind"}
+	GitStash    = Icon{NerdFont: "≡", ASCII: "stash"}
 
 	// Beads (issue tracker) status icons
 	BeadsOpen       = Icon{NerdFont: "✗", ASCII: "[open]"}
@@ -60,11 +60,11 @@ var (
 	File      = Icon{NerdFont: "📄", ASCII: "file"}
 
 	// Time and session icons
-	Clock       = Icon{NerdFont: "⏱️", ASCII: "time"}
-	Session     = Icon{NerdFont: "🤖", ASCII: "AI"}
-	Context     = Icon{NerdFont: "📊", ASCII: "ctx"}
-	Agent       = Icon{NerdFont: "↻", ASCII: "agent"}
-	Tool        = Icon{NerdFont: "✓", ASCII: "ok"}
+	Clock   = Icon{NerdFont: "⏱️", ASCII: "time"}
+	Session = Icon{NerdFont: "🤖", ASCII: "AI"}
+	Context = Icon{NerdFont: "📊", ASCII: "ctx"}
+	Agent   = Icon{NerdFont: "↻", ASCII: "agent"}
+	Tool    = Icon{NerdFont: "✓", ASCII: "ok"}
 
 	// Status icons
 	Loading = Icon{NerdFont: "◐", ASCII: "..."}
@@ -76,10 +76,10 @@ var (
 
 	// Priority icons
 	PriorityCritical = Icon{NerdFont: "🔴", ASCII: "P0"}
-	PriorityHigh    = Icon{NerdFont: "🟠", ASCII: "P1"}
-	PriorityMedium  = Icon{NerdFont: "🟡", ASCII: "P2"}
-	PriorityLow     = Icon{NerdFont: "🟢", ASCII: "P3"}
-	PriorityBacklog = Icon{NerdFont: "⚪", ASCII: "P4"}
+	PriorityHigh     = Icon{NerdFont: "🟠", ASCII: "P1"}
+	PriorityMedium   = Icon{NerdFont: "🟡", ASCII: "P2"}
+	PriorityLow      = Icon{NerdFont: "🟢", ASCII: "P3"}
+	PriorityBacklog  = Icon{NerdFont: "⚪", ASCII: "P4"}
 )
 
 // LanguageIcon returns the icon for a programming language

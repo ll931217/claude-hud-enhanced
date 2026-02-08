@@ -16,29 +16,29 @@ import (
 
 // Reader reads and caches beads issues from .beads/issues.jsonl
 type Reader struct {
-	mu              sync.RWMutex
-	repoPath        string
-	issues          map[string]*Issue
-	byStatus        map[IssueStatus][]*Issue
-	lastModTime     time.Time
-	lastCheck       time.Time
-	cacheTTL        time.Duration
-	watcher         *watcher.Watcher
-	watcherStarted  bool
-	forceReload     bool // Set to true when file changes are detected
-	watcherCancel   context.CancelFunc
-	watcherDone     chan struct{}
+	mu             sync.RWMutex
+	repoPath       string
+	issues         map[string]*Issue
+	byStatus       map[IssueStatus][]*Issue
+	lastModTime    time.Time
+	lastCheck      time.Time
+	cacheTTL       time.Duration
+	watcher        *watcher.Watcher
+	watcherStarted bool
+	forceReload    bool // Set to true when file changes are detected
+	watcherCancel  context.CancelFunc
+	watcherDone    chan struct{}
 }
 
 // NewReader creates a new beads reader for the given repository path
 func NewReader(repoPath string) *Reader {
 	return &Reader{
-		repoPath:      repoPath,
-		issues:        make(map[string]*Issue),
-		byStatus:      make(map[IssueStatus][]*Issue),
-		cacheTTL:      500 * time.Millisecond, // Faster initial load, will be improved with file watching
-		watcher:       watcher.NewWatcher(),
-		watcherDone:   make(chan struct{}),
+		repoPath:    repoPath,
+		issues:      make(map[string]*Issue),
+		byStatus:    make(map[IssueStatus][]*Issue),
+		cacheTTL:    500 * time.Millisecond, // Faster initial load, will be improved with file watching
+		watcher:     watcher.NewWatcher(),
+		watcherDone: make(chan struct{}),
 	}
 }
 

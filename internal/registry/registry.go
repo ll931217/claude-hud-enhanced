@@ -10,7 +10,7 @@ type SectionFactory func(config interface{}) (Section, error)
 
 // SectionRegistry manages registration and creation of section types
 type SectionRegistry struct {
-	mu       sync.RWMutex
+	mu        sync.RWMutex
 	factories map[string]SectionFactory
 }
 

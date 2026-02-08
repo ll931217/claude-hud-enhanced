@@ -43,14 +43,14 @@ type MCPData struct {
 
 // Client represents an MCP client for querying Claude Code's MCP servers
 type Client struct {
-	mu              sync.RWMutex
-	configPath      string
-	servers         map[string]*MCPServer
-	enabled         bool
-	timeout         time.Duration
-	lastQueryTime   time.Time
-	queryCache      map[string]*MCPData
-	cacheTTL        time.Duration
+	mu            sync.RWMutex
+	configPath    string
+	servers       map[string]*MCPServer
+	enabled       bool
+	timeout       time.Duration
+	lastQueryTime time.Time
+	queryCache    map[string]*MCPData
+	cacheTTL      time.Duration
 }
 
 // NewClient creates a new MCP client
@@ -178,9 +178,9 @@ func (c *Client) queryServer(ctx context.Context, server *MCPServer) *MCPData {
 	data := &MCPData{
 		ServerName: server.Name,
 		Data: map[string]interface{}{
-			"status": "detected",
+			"status":  "detected",
 			"command": server.Command,
-			"args": server.Args,
+			"args":    server.Args,
 		},
 		Timestamp: time.Now(),
 	}

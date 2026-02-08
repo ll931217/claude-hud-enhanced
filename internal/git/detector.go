@@ -15,17 +15,17 @@ import (
 
 // Status represents the git status of a repository
 type Status struct {
-	Branch         string
-	IsWorktree     bool
-	WorktreeName   string
-	Dirty          bool
-	Modified       int
-	Added          int
-	Deleted        int
-	Untracked      int
-	Ahead          int
-	Behind         int
-	Stashed        int
+	Branch       string
+	IsWorktree   bool
+	WorktreeName string
+	Dirty        bool
+	Modified     int
+	Added        int
+	Deleted      int
+	Untracked    int
+	Ahead        int
+	Behind       int
+	Stashed      int
 }
 
 // Detector handles git status and worktree detection

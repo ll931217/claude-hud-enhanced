@@ -125,7 +125,7 @@ func TestStatus_FormatStatus(t *testing.T) {
 				Ahead:  2,
 				Behind: 1,
 			},
-			want: "🌿 main ⇅ 2|1",  // Already has space
+			want: "🌿 main ⇅ 2|1", // Already has space
 		},
 		{
 			name: "worktree",

@@ -63,7 +63,7 @@ func (s *SysInfoSection) Render() string {
 		return ""
 	}
 
-	return strings.Join(parts, " | ")
+	return strings.Join(parts, " · ")
 }
 
 func init() {

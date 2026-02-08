@@ -49,7 +49,8 @@ func (c *ContextBarSection) Render() string {
 	inputTokens := statusline.GetContextInputTokens()
 	cacheTokens := statusline.GetContextCacheTokens()
 
-	if windowSize > 0 {
+	// Only use stdin data if we have actual token counts (not just zeros)
+	if windowSize > 0 && (inputTokens > 0 || cacheTokens > 0) {
 		// Calculate percentage from JSON input data
 		totalTokens := inputTokens + cacheTokens
 		percentage := (totalTokens * 100) / windowSize
@@ -87,6 +88,7 @@ func (c *ContextBarSection) Render() string {
 	}
 
 	// Fallback: Try to get from transcript parser
+	// (also used when stdin data exists but has zero tokens)
 	ctx, cancel := context.WithTimeout(context.Background(), 100*time.Millisecond)
 	defer cancel()
 

@@ -58,10 +58,10 @@ func ColorNames() map[string]string {
 // These can be used for terminal output with color support
 func ANSIColors() map[string]int {
 	return map[string]int{
-		"primary":   38, // Blue/Cyan
+		"primary":   38,  // Blue/Cyan
 		"secondary": 141, // Purple
 		"muted":     245, // Gray
-		"success":   40, // Green
+		"success":   40,  // Green
 		"warning":   215, // Orange
 		"error":     203, // Red
 		"info":      146, // Lavender

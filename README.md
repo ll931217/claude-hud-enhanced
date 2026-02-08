@@ -411,6 +411,7 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 
 ## Acknowledgments
 
+- [Claude HUD](https://github.com/jarrodwatts/claude-hud) - The original Claude HUD
 - [Claude Code](https://claude.ai/code) - The AI-powered development environment
 - [Beads](https://github.com/steveyegge/beads) - Git-based issue tracker
 - [Worktrunk](https://worktrunk.dev/) - Git worktree management

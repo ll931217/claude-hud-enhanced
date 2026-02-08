@@ -6,14 +6,14 @@ import (
 
 // ClaudeCodeContext holds data from Claude Code's statusline JSON input
 type ClaudeCodeContext struct {
-	mu             sync.RWMutex
-	TranscriptPath string
-	WorkspaceDir   string
-	ModelName      string
-	ContextWindowSize int
+	mu                 sync.RWMutex
+	TranscriptPath     string
+	WorkspaceDir       string
+	ModelName          string
+	ContextWindowSize  int
 	ContextInputTokens int
 	ContextCacheTokens int
-	Available      bool // true if JSON was successfully parsed
+	Available          bool // true if JSON was successfully parsed
 }
 
 // Global context instance

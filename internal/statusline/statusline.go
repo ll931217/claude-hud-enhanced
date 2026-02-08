@@ -50,10 +50,10 @@ func New(cfg *config.Config, reg *registry.SectionRegistry) (*Statusline, error)
 	}
 
 	return &Statusline{
-		config:         cfg,
-		registry:       reg,
-		sections:       make([]registry.Section, 0),
-		done:           make(chan struct{}),
+		config:          cfg,
+		registry:        reg,
+		sections:        make([]registry.Section, 0),
+		done:            make(chan struct{}),
 		refreshInterval: interval,
 	}, nil
 }

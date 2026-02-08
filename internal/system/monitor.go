@@ -19,22 +19,22 @@ import (
 type ThresholdLevel int
 
 const (
-	LevelGood  ThresholdLevel = iota // Green (0-70%)
-	LevelWarning                       // Yellow (70-90%)
-	LevelCritical                      // Red (>90%)
+	LevelGood     ThresholdLevel = iota // Green (0-70%)
+	LevelWarning                        // Yellow (70-90%)
+	LevelCritical                       // Red (>90%)
 )
 
 // Monitor tracks system resources
 type Monitor struct {
-	mu            sync.RWMutex
-	lastUpdate    time.Time
+	mu             sync.RWMutex
+	lastUpdate     time.Time
 	updateInterval time.Duration
-	cpu           CPUInfo
-	memory        MemoryInfo
-	disk          DiskInfo
-	fd            FDInfo
-	currentDir    string
-	language      string
+	cpu            CPUInfo
+	memory         MemoryInfo
+	disk           DiskInfo
+	fd             FDInfo
+	currentDir     string
+	language       string
 }
 
 // CPUInfo contains CPU usage information
@@ -519,36 +519,36 @@ func getDarwinFDCount() (FDInfo, error) {
 func detectLanguage(dir string) string {
 	// Language detection map based on file extensions
 	extToLang := map[string]string{
-		".go":  "Go",
-		".py":  "Python",
-		".rs":  "Rust",
-		".js":  "JavaScript",
-		".ts":  "TypeScript",
-		".tsx": "TypeScript",
-		".jsx": "JavaScript",
-		".java": "Java",
-		".kt":  "Kotlin",
-		".rb":  "Ruby",
-		".php": "PHP",
-		".cs":  "C#",
-		".cpp": "C++",
-		".cc":  "C++",
-		".cxx": "C++",
-		".c":   "C",
-		".h":   "C/C++",
-		".hpp": "C++",
+		".go":    "Go",
+		".py":    "Python",
+		".rs":    "Rust",
+		".js":    "JavaScript",
+		".ts":    "TypeScript",
+		".tsx":   "TypeScript",
+		".jsx":   "JavaScript",
+		".java":  "Java",
+		".kt":    "Kotlin",
+		".rb":    "Ruby",
+		".php":   "PHP",
+		".cs":    "C#",
+		".cpp":   "C++",
+		".cc":    "C++",
+		".cxx":   "C++",
+		".c":     "C",
+		".h":     "C/C++",
+		".hpp":   "C++",
 		".swift": "Swift",
-		".sh":  "Shell",
+		".sh":    "Shell",
 		".scala": "Scala",
-		".clj": "Clojure",
-		".ex":  "Elixir",
-		".exs": "Elixir",
-		".erl": "Erlang",
-		".hs":  "Haskell",
-		".lua": "Lua",
-		".r":   "R",
-		".m":   "Objective-C",
-		".ui":  "UI",
+		".clj":   "Clojure",
+		".ex":    "Elixir",
+		".exs":   "Elixir",
+		".erl":   "Erlang",
+		".hs":    "Haskell",
+		".lua":   "Lua",
+		".r":     "R",
+		".m":     "Objective-C",
+		".ui":    "UI",
 	}
 
 	// Count files by extension
