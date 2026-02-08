@@ -256,6 +256,7 @@ func InfiniteRecovery(op string, fn func() bool, maxCalls ...int) {
 		}
 
 		recovered := false
+		fnReturnedFalse := false
 		func() {
 			defer func() {
 				recovered = globalRecovery.Recover(op)
@@ -263,10 +264,15 @@ func InfiniteRecovery(op string, fn func() bool, maxCalls ...int) {
 
 			if !fn() {
 				Info(op, "function returned false, stopping loop")
+				fnReturnedFalse = true
 				return
 			}
 			callCount++
 		}()
+
+		if fnReturnedFalse {
+			break
+		}
 
 		if recovered && globalRecovery.RecoveryCount() > 100 {
 			Error(op, "too many panics (%d), stopping loop", globalRecovery.RecoveryCount())
