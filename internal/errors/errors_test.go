@@ -780,8 +780,8 @@ func TestSafeGo(t *testing.T) {
 
 	done := make(chan bool)
 	SafeGo("test", func() {
+		defer func() { done <- true }()
 		panic("test panic in goroutine")
-		done <- true
 	})
 
 	// Should complete without crashing the test
