@@ -140,40 +140,40 @@ func (u *UsageInfo) TotalInput() int {
 
 // ClaudeCodeTranscriptLine represents a full line from the Claude Code transcript
 type ClaudeCodeTranscriptLine struct {
-	Type          string                `json:"type"` // user, assistant, summary, etc.
-	Message       *ClaudeCodeMessage    `json:"message,omitempty"`
-	ToolUseResult *ToolResultExtra      `json:"toolUseResult,omitempty"`
-	UUID          string                `json:"uuid,omitempty"`
-	Timestamp     string                `json:"timestamp,omitempty"`
+	Type          string             `json:"type"` // user, assistant, summary, etc.
+	Message       *ClaudeCodeMessage `json:"message,omitempty"`
+	ToolUseResult *ToolResultExtra   `json:"toolUseResult,omitempty"`
+	UUID          string             `json:"uuid,omitempty"`
+	Timestamp     string             `json:"timestamp,omitempty"`
 }
 
 // ClaudeCodeMessage represents the full message structure from Claude Code
 type ClaudeCodeMessage struct {
-	Role       string        `json:"role"`
-	Model      string        `json:"model,omitempty"`
+	Role       string         `json:"role"`
+	Model      string         `json:"model,omitempty"`
 	Content    []ContentBlock `json:"content"`
-	Usage      *UsageInfo    `json:"usage,omitempty"`
-	StopReason string        `json:"stop_reason,omitempty"`
+	Usage      *UsageInfo     `json:"usage,omitempty"`
+	StopReason string         `json:"stop_reason,omitempty"`
 }
 
 // ContentBlock represents a content block within a message
 type ContentBlock struct {
-	Type      string          `json:"type"` // text, tool_use, tool_result, thinking, etc.
-	ID        string          `json:"id,omitempty"`
-	Name      string          `json:"name,omitempty"` // for tool_use
-	Input     json.RawMessage `json:"input,omitempty"` // for tool_use
-	ToolUseID string          `json:"tool_use_id,omitempty"` // for tool_result
-	Content   []ContentBlock  `json:"content,omitempty"` // nested content array
-	ContentStr string         `json:"-"` // Raw content string (extracted separately)
-	Text      string          `json:"text,omitempty"` // for text blocks
-	IsError   bool            `json:"is_error,omitempty"` // for tool_result error status
+	Type       string          `json:"type"` // text, tool_use, tool_result, thinking, etc.
+	ID         string          `json:"id,omitempty"`
+	Name       string          `json:"name,omitempty"`        // for tool_use
+	Input      json.RawMessage `json:"input,omitempty"`       // for tool_use
+	ToolUseID  string          `json:"tool_use_id,omitempty"` // for tool_result
+	Content    []ContentBlock  `json:"content,omitempty"`     // nested content array
+	ContentStr string          `json:"-"`                     // Raw content string (extracted separately)
+	Text       string          `json:"text,omitempty"`        // for text blocks
+	IsError    bool            `json:"is_error,omitempty"`    // for tool_result error status
 }
 
 // ToolResultExtra contains extended tool result info
 type ToolResultExtra struct {
-	Status           string `json:"status"`
-	AgentID          string `json:"agentId,omitempty"`
-	TotalDurationMs  int    `json:"totalDurationMs,omitempty"`
+	Status          string `json:"status"`
+	AgentID         string `json:"agentId,omitempty"`
+	TotalDurationMs int    `json:"totalDurationMs,omitempty"`
 }
 
 // ParseEventType attempts to determine event type from raw JSON

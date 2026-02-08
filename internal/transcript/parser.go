@@ -17,7 +17,7 @@ import (
 
 // Constants for context window calculations
 const (
-	AUTOCOMPACT_BUFFER = 128000 // Tokens reserved for auto-compact
+	AUTOCOMPACT_BUFFER  = 128000      // Tokens reserved for auto-compact
 	MAX_SCAN_TOKEN_SIZE = 1024 * 1024 // 1MB max line size for transcript parsing
 )
 

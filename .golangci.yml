@@ -1,0 +1,31 @@
+run:
+  timeout: 5m
+  tests: true
+  build-tags: []
+
+linters:
+  disable-all: true
+  enable:
+    - gofmt
+    - govet
+    - revive
+
+linters-settings:
+  revive:
+    severity: warning
+  govet:
+    enable-all: false
+    enable:
+      - atomic
+      - bools
+      - composites
+      - copylocks
+      - nilfunc
+      - printf
+      - stdmethods
+      - structtag
+
+issues:
+  exclude-use-default: false
+  max-issues-per-linter: 0
+  max-same-issues: 0

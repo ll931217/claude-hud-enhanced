@@ -538,7 +538,6 @@ func TestRecoverPanic(t *testing.T) {
 	func() {
 		defer RecoverPanic("test")
 		panic("test panic")
-		didPanic = true
 	}()
 
 	// If we reach here, recovery worked
@@ -1186,7 +1185,6 @@ func TestRecoverAndLog(t *testing.T) {
 	func() {
 		defer RecoverAndLog("test")
 		panic("test panic")
-		didPanic = true
 	}()
 
 	// If we reach here, recovery worked
