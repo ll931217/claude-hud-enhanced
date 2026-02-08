@@ -6,6 +6,8 @@ A sophisticated statusline plugin for Claude Code sessions, providing real-time 
 ![Go](https://img.shields.io/badge/Go-1.25.5+-00ADD8?logo=go)
 ![License](https://img.shields.io/badge/license-MIT-green)
 
+<img width="1064" height="172" alt="image" src="https://github.com/user-attachments/assets/6e3c9008-6ffa-4340-906f-e25c642c12c7" />
+
 ## Features
 
 - **Claude Code Integration**: Deep integration with Claude Code session transcripts
