@@ -259,7 +259,7 @@ func TestGetEnabledSections_FromLayout(t *testing.T) {
 	enabled := config.GetEnabledSections()
 
 	// Check that we get all expected sections from default layout
-	expectedCount := 8 // model, contextbar, duration, beads, status, workspace, tools, sysinfo
+	expectedCount := 9 // model, contextbar, duration, beads, status, workspace, claudestats, tools, sysinfo
 	if len(enabled) != expectedCount {
 		t.Fatalf("Expected %d enabled sections from default layout, got %d", expectedCount, len(enabled))
 	}
@@ -270,7 +270,7 @@ func TestGetEnabledSections_FromLayout(t *testing.T) {
 		sectionMap[s] = true
 	}
 
-	expectedSections := []string{"model", "contextbar", "duration", "beads", "status", "workspace", "tools", "sysinfo"}
+	expectedSections := []string{"model", "contextbar", "duration", "beads", "status", "workspace", "claudestats", "tools", "sysinfo"}
 	for _, s := range expectedSections {
 		if !sectionMap[s] {
 			t.Errorf("Expected section '%s' to be in enabled list", s)
@@ -307,8 +307,8 @@ func TestGetEnabledSections_EmptyLayout(t *testing.T) {
 	enabled := config.GetEnabledSections()
 
 	// All sections should be enabled when layout is empty
-	if len(enabled) != 8 {
-		t.Fatalf("Expected 8 enabled sections with empty layout, got %d", len(enabled))
+	if len(enabled) != 9 {
+		t.Fatalf("Expected 9 enabled sections with empty layout, got %d", len(enabled))
 	}
 }
 

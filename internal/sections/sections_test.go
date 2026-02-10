@@ -12,7 +12,7 @@ func TestSectionRegistry(t *testing.T) {
 	t.Run("List returns all registered sections", func(t *testing.T) {
 		sections := registry.List()
 
-		expectedSections := []string{"model", "contextbar", "duration", "beads", "status", "workspace", "tools", "sysinfo"}
+		expectedSections := []string{"model", "contextbar", "duration", "beads", "status", "workspace", "claudestats", "tools", "sysinfo"}
 
 		for _, expected := range expectedSections {
 			found := false
@@ -30,7 +30,7 @@ func TestSectionRegistry(t *testing.T) {
 
 	// Test creating sections
 	t.Run("Create returns valid sections", func(t *testing.T) {
-		testCases := []string{"model", "contextbar", "duration", "beads", "status", "workspace", "tools", "sysinfo"}
+		testCases := []string{"model", "contextbar", "duration", "beads", "status", "workspace", "claudestats", "tools", "sysinfo"}
 
 		for _, sectionType := range testCases {
 			section, err := registry.Create(sectionType, nil)
@@ -58,8 +58,9 @@ func TestSectionRegistry(t *testing.T) {
 			// - contextbar, duration: needs transcript file
 			// - tools: needs transcript file for tool activity
 			// - sysinfo: monitor may fail to update in test
+			// - claudestats: may return empty if no MCP/skills/hooks configured
 			rendered := section.Render()
-			allowEmpty := (sectionType == "model" || sectionType == "tools" || sectionType == "sysinfo" || sectionType == "contextbar" || sectionType == "duration")
+			allowEmpty := (sectionType == "model" || sectionType == "tools" || sectionType == "sysinfo" || sectionType == "contextbar" || sectionType == "duration" || sectionType == "claudestats")
 			if rendered == "" && !allowEmpty {
 				t.Errorf("Expected section %q to render non-empty string", sectionType)
 			}
