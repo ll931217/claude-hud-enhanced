@@ -14,28 +14,28 @@ import (
 
 // coreTools is the set of built-in Claude Code tools
 var coreTools = map[string]bool{
-	"read":           true,
-	"edit":           true,
-	"write":          true,
-	"bash":           true,
-	"grep":           true,
-	"glob":           true,
+	"read":            true,
+	"edit":            true,
+	"write":           true,
+	"bash":            true,
+	"grep":            true,
+	"glob":            true,
 	"askuserquestion": true,
-	"todowrite":      true,
-	"taskupdate":     true,
-	"taskget":        true,
-	"tasklist":       true,
-	"taskoutput":     true,
-	"skill":          true,
-	"websearch":      true,
-	"webfetch":       true,
-	"mcp__search":    true,
-	"notebookedit":   true,
-	"killshell":      true,
-	"exitplanmode":   true,
-	"enterplanmode":  true,
-	"readfile":       true,
-	"repository":     true,
+	"todowrite":       true,
+	"taskupdate":      true,
+	"taskget":         true,
+	"tasklist":        true,
+	"taskoutput":      true,
+	"skill":           true,
+	"websearch":       true,
+	"webfetch":        true,
+	"mcp__search":     true,
+	"notebookedit":    true,
+	"killshell":       true,
+	"exitplanmode":    true,
+	"enterplanmode":   true,
+	"readfile":        true,
+	"repository":      true,
 }
 
 // StatsCache holds cached statistics
@@ -141,7 +141,7 @@ func (c *Collector) collectHooksCount(ctx context.Context) int {
 
 	var settings struct {
 		Hooks map[string][]struct {
-			Matcher string          `json:"matcher"`
+			Matcher string            `json:"matcher"`
 			Hooks   []json.RawMessage `json:"hooks"`
 		} `json:"hooks"`
 	}
