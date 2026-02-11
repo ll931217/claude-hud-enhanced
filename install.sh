@@ -74,23 +74,47 @@ install_binary() {
     # Create temp directory
     local tmp_dir
     tmp_dir=$(mktemp -d)
+    trap "rm -rf '$tmp_dir'" EXIT
 
     # Download archive
     if ! curl -fsSL "$download_url" -o "${tmp_dir}/${archive_name}"; then
-        rm -rf "$tmp_dir"
         error_exit "Failed to download archive from $download_url"
+    fi
+
+    # Verify download is a gzip file
+    if ! file "${tmp_dir}/${archive_name}" | grep -q "gzip"; then
+        error_exit "Downloaded file is not a valid gzip archive"
     fi
 
     # Extract archive
     print_msg "$BLUE" "Extracting archive..."
-    tar -xzf "${tmp_dir}/${archive_name}" -C "$tmp_dir"
+    if ! tar -xzf "${tmp_dir}/${archive_name}" -C "$tmp_dir"; then
+        error_exit "Failed to extract archive"
+    fi
 
-    # Find the extracted binary
-    local binary_name
-    binary_name=$(find "$tmp_dir" -type f -name "claude-hud-*" | head -1 | xargs basename)
+    # Find the extracted binary (exclude the .tar.gz file)
+    local binary_path
+    binary_path=$(find "$tmp_dir" -type f -name "claude-hud-*" ! -name "*.tar.gz" | head -1)
+
+    if [ -z "$binary_path" ]; then
+        error_exit "Could not find extracted binary in archive"
+    fi
+
+    # Verify it's an ELF/Mach-O executable, not a compressed file
+    local file_type
+    file_type=$(file "$binary_path")
+    if echo "$file_type" | grep -qE "(gzip|tar|compressed|archive)"; then
+        error_exit "Extracted file is still compressed: $file_type"
+    fi
+
+    if ! echo "$file_type" | grep -qE "(ELF|Mach-O|executable)"; then
+        error_exit "Extracted file is not an executable: $file_type"
+    fi
+
+    print_msg "$GREEN" "Verified binary: $(basename "$binary_path")"
 
     # Make executable
-    chmod +x "${tmp_dir}/${binary_name}"
+    chmod +x "$binary_path"
 
     # Create .claude directory if it doesn't exist
     mkdir -p ~/.claude
@@ -103,11 +127,22 @@ install_binary() {
     fi
 
     # Install binary
-    cp "${tmp_dir}/${binary_name}" ~/.claude/claude-hud
+    cp "$binary_path" ~/.claude/claude-hud
+    chmod +x ~/.claude/claude-hud
+
+    # Final verification
+    if ! file ~/.claude/claude-hud | grep -qE "(ELF|Mach-O|executable)"; then
+        error_exit "Installation verification failed: ~/.claude/claude-hud is not a valid executable"
+    fi
+
     print_msg "$GREEN" "Binary installed to ~/.claude/claude-hud"
 
-    # Cleanup
-    rm -rf "$tmp_dir"
+    # Show version to confirm it works
+    if ~/.claude/claude-hud -version 2>/dev/null; then
+        print_msg "$GREEN" "Installation verified successfully!"
+    else
+        print_msg "$YELLOW" "Warning: Could not verify installation by running binary"
+    fi
 }
 
 # Update Claude Code settings
