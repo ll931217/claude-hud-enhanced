@@ -92,11 +92,24 @@ install_binary() {
         error_exit "Failed to extract archive"
     fi
 
-    # Find the extracted binary (exclude the .tar.gz file)
+    # Debug: List extracted files
+    if [ -n "${DEBUG:-}" ]; then
+        print_msg "$BLUE" "Extracted files:"
+        ls -lah "$tmp_dir"
+    fi
+
+    # Find the extracted binary (look for file named "claude-hud", not the .tar.gz)
     local binary_path
-    binary_path=$(find "$tmp_dir" -type f -name "claude-hud-*" ! -name "*.tar.gz" | head -1)
+    binary_path=$(find "$tmp_dir" -type f -name "claude-hud" | head -1)
+
+    # Fallback: if not found by exact name, find any file that's not .tar.gz
+    if [ -z "$binary_path" ]; then
+        binary_path=$(find "$tmp_dir" -type f ! -name "*.tar.gz" ! -name "*.gz" | head -1)
+    fi
 
     if [ -z "$binary_path" ]; then
+        print_msg "$RED" "Could not find extracted binary. Contents of ${tmp_dir}:"
+        ls -la "$tmp_dir"
         error_exit "Could not find extracted binary in archive"
     fi
 
