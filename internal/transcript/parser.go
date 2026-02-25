@@ -37,6 +37,7 @@ type Parser struct {
 	totalInputTokens  int
 	totalOutputTokens int
 	todos             map[string]*TodoInfo
+	errors            []*ErrorInfo
 }
 
 // ParserState tracks the current state of the parser
@@ -193,6 +194,8 @@ func (p *Parser) parseLine(line []byte) error {
 						// Set status based on is_error field
 						if block.IsError {
 							existingTool.Status = "error"
+							// Track error
+							p.trackError(ccLine.Timestamp, existingTool.Name, "Tool execution failed", "error")
 						} else {
 							existingTool.Status = "completed"
 						}
@@ -202,6 +205,7 @@ func (p *Parser) parseLine(line []byte) error {
 						status := "completed"
 						if block.IsError {
 							status = "error"
+							p.trackError(ccLine.Timestamp, "Unknown", "Tool execution failed", "error")
 						}
 						p.toolActivity[block.ToolUseID] = &ToolInfo{
 							Name:      "Unknown",
@@ -469,6 +473,7 @@ func (p *Parser) resetState() {
 	p.toolActivity = make(map[string]*ToolInfo)
 	p.agentActivity = make(map[string]*AgentInfo)
 	p.todos = make(map[string]*TodoInfo)
+	p.errors = make([]*ErrorInfo, 0)
 	// Keep session start if we already found it
 }
 
@@ -927,4 +932,66 @@ func truncateTarget(target string, maxLen int) string {
 		return filename[:maxLen-3] + "..."
 	}
 	return filename
+}
+
+// trackError adds an error to the error list
+func (p *Parser) trackError(timestamp, toolName, message, severity string) {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+
+	var ts time.Time
+	if timestamp != "" {
+		if t, err := time.Parse(time.RFC3339Nano, timestamp); err == nil {
+			ts = t
+		}
+	}
+	if ts.IsZero() {
+		ts = time.Now()
+	}
+
+	p.errors = append(p.errors, &ErrorInfo{
+		Timestamp: ts,
+		ToolName:  toolName,
+		Message:   message,
+		Severity:  severity,
+	})
+}
+
+// GetRecentErrors returns the most recent errors (up to limit)
+func (p *Parser) GetRecentErrors(limit int) []*ErrorInfo {
+	p.mu.RLock()
+	defer p.mu.RUnlock()
+
+	if limit <= 0 || limit > len(p.errors) {
+		limit = len(p.errors)
+	}
+
+	// Return last N errors
+	start := len(p.errors) - limit
+	if start < 0 {
+		start = 0
+	}
+
+	result := make([]*ErrorInfo, len(p.errors)-start)
+	copy(result, p.errors[start:])
+	return result
+}
+
+// GetErrorCount returns the total error count and errors in the last N minutes
+func (p *Parser) GetErrorCount(lastMinutes int) (total, recent int) {
+	p.mu.RLock()
+	defer p.mu.RUnlock()
+
+	total = len(p.errors)
+	if lastMinutes <= 0 {
+		return total, 0
+	}
+
+	cutoff := time.Now().Add(-time.Duration(lastMinutes) * time.Minute)
+	for _, err := range p.errors {
+		if err.Timestamp.After(cutoff) {
+			recent++
+		}
+	}
+	return total, recent
 }

@@ -28,6 +28,19 @@ A sophisticated statusline plugin for Claude Code sessions, providing real-time 
 - **Performance**: Streaming JSONL parsing with <50ms render latency
 - **Cross-Platform**: Builds for Linux and macOS
 
+### Optional Sections
+
+Additional sections are available (not enabled by default) for enhanced functionality:
+
+- **Agent Activity**: Show running and completed Claude Code subagents
+- **Cost Tracker**: Display accumulated API costs with hourly rate
+- **Todo Progress**: Track TodoWrite-based task lists
+- **Recent Errors**: Monitor tool execution errors
+- **Test Coverage**: Display test coverage percentage (Go/JS/Python)
+- **Build Status**: Show build/type-check status
+
+See [docs/OPTIONAL_SECTIONS.md](docs/OPTIONAL_SECTIONS.md) for details on enabling and configuring these sections.
+
 ## Quick Start
 
 ### One-Line Install

@@ -119,6 +119,14 @@ type TodoInfo struct {
 	Priority int    `json:"priority,omitempty"`
 }
 
+// ErrorInfo contains error information from transcript
+type ErrorInfo struct {
+	Timestamp time.Time `json:"timestamp"`
+	ToolName  string    `json:"tool_name,omitempty"`
+	Message   string    `json:"message,omitempty"`
+	Severity  string    `json:"severity,omitempty"` // error, warning
+}
+
 // ContextWindow contains context usage information
 type ContextWindow struct {
 	CurrentUsage      UsageInfo `json:"current_usage"`
