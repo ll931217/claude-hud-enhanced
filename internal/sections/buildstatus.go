@@ -31,7 +31,7 @@ func NewBuildStatusSection(cfg interface{}) (registry.Section, error) {
 
 	base := NewBaseSection("buildstatus", appConfig)
 	base.SetPriority(registry.PriorityImportant) // Important for code health
-	base.SetMinWidth(12)                          // Minimum width for build status
+	base.SetMinWidth(12)                         // Minimum width for build status
 
 	return &BuildStatusSection{
 		BaseSection:   base,

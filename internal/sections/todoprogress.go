@@ -29,7 +29,7 @@ func NewTodoProgressSection(cfg interface{}) (registry.Section, error) {
 
 	base := NewBaseSection("todoprogress", appConfig)
 	base.SetPriority(registry.PriorityEssential) // Show current task progress
-	base.SetMinWidth(20)                          // Minimum width for progress display
+	base.SetMinWidth(20)                         // Minimum width for progress display
 
 	return &TodoProgressSection{
 		BaseSection: base,

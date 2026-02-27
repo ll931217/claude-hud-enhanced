@@ -29,7 +29,7 @@ func NewErrorsSection(cfg interface{}) (registry.Section, error) {
 
 	base := NewBaseSection("errors", appConfig)
 	base.SetPriority(registry.PriorityImportant) // Important to see errors
-	base.SetMinWidth(15)                          // Minimum width for error display
+	base.SetMinWidth(15)                         // Minimum width for error display
 
 	return &ErrorsSection{
 		BaseSection: base,

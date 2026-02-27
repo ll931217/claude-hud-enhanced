@@ -33,7 +33,7 @@ func NewTestCoverageSection(cfg interface{}) (registry.Section, error) {
 
 	base := NewBaseSection("testcoverage", appConfig)
 	base.SetPriority(registry.PriorityImportant) // Important for TDD workflow
-	base.SetMinWidth(15)                          // Minimum width for coverage display
+	base.SetMinWidth(15)                         // Minimum width for coverage display
 
 	return &TestCoverageSection{
 		BaseSection:   base,

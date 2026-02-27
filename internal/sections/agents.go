@@ -67,8 +67,8 @@ func (a *AgentsSection) Render() string {
 	var running, completed []agentDisplay
 	for _, agent := range agents {
 		display := agentDisplay{
-			name:   shortenAgentName(agent.AgentName),
-			status: agent.Status,
+			name:      shortenAgentName(agent.AgentName),
+			status:    agent.Status,
 			agentType: agent.Type,
 		}
 
@@ -127,18 +127,18 @@ type agentDisplay struct {
 func shortenAgentName(name string) string {
 	// Map of agent names to shortened versions
 	shortNames := map[string]string{
-		"planner":             "Plan",
-		"code-reviewer":       "Review",
-		"architect":           "Arch",
-		"tdd-guide":           "TDD",
-		"security-reviewer":   "Sec",
+		"planner":              "Plan",
+		"code-reviewer":        "Review",
+		"architect":            "Arch",
+		"tdd-guide":            "TDD",
+		"security-reviewer":    "Sec",
 		"build-error-resolver": "Build",
-		"e2e-runner":          "E2E",
-		"refactor-cleaner":    "Refactor",
-		"doc-updater":         "Docs",
-		"debugger":            "Debug",
-		"general-purpose":     "GP",
-		"Explore":             "Explore",
+		"e2e-runner":           "E2E",
+		"refactor-cleaner":     "Refactor",
+		"doc-updater":          "Docs",
+		"debugger":             "Debug",
+		"general-purpose":      "GP",
+		"Explore":              "Explore",
 	}
 
 	// Check if we have a shortened version

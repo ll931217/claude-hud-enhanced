@@ -28,7 +28,7 @@ func NewCostSection(cfg interface{}) (registry.Section, error) {
 
 	base := NewBaseSection("cost", appConfig)
 	base.SetPriority(registry.PriorityImportant) // Important but not essential
-	base.SetMinWidth(10)                          // Minimum width for cost display
+	base.SetMinWidth(10)                         // Minimum width for cost display
 
 	return &CostSection{
 		BaseSection: base,
