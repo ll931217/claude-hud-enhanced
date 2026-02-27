@@ -109,7 +109,7 @@ func (m *Monitor) Update() error {
 		}
 
 		// Update language detection
-		m.language = detectLanguage(m.currentDir)
+		m.language = DetectLanguage(m.currentDir)
 
 		m.lastUpdate = time.Now()
 		return nil
@@ -515,8 +515,8 @@ func getDarwinFDCount() (FDInfo, error) {
 	}, nil
 }
 
-// detectLanguage detects the primary programming language from files in directory
-func detectLanguage(dir string) string {
+// DetectLanguage detects the primary programming language from files in directory
+func DetectLanguage(dir string) string {
 	// Language detection map based on file extensions
 	extToLang := map[string]string{
 		".go":    "Go",

@@ -67,7 +67,7 @@ func (b *BaseSection) GetConfig() *config.Config {
 
 // Priority returns the display priority for responsive layouts
 func (b *BaseSection) Priority() registry.Priority {
-	if b.priority == 0 {
+	if b.priority == registry.PriorityUnset {
 		return registry.PriorityImportant // Default
 	}
 	return b.priority

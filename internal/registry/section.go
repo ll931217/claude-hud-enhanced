@@ -4,9 +4,10 @@ package registry
 type Priority int
 
 const (
-	PriorityEssential Priority = iota // Always show (model, context)
-	PriorityImportant                 // Show when space permits (todos, git, language)
-	PriorityOptional                  // Hide first when space constrained (tools, cost, system info)
+	PriorityUnset Priority = iota // Unset/undefined (for zero-value detection)
+	PriorityEssential             // Always show (model, context)
+	PriorityImportant             // Show when space permits (todos, git, language)
+	PriorityOptional              // Hide first when space constrained (tools, cost, system info)
 )
 
 // Section represents a renderable component in the HUD

@@ -53,7 +53,7 @@ func (t *TestCoverageSection) Render() string {
 	t.mu.RUnlock()
 
 	// Detect language
-	lang, _ := system.DetectLanguage(".")
+	lang := system.DetectLanguage(".")
 	if lang == "" {
 		return "" // Hide section if language not detected
 	}

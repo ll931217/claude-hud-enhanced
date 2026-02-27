@@ -75,8 +75,52 @@ func (pr *PanicRecovery) ResetCount() {
 // Recover catches a panic and handles it using the configured handler.
 // Returns true if a panic was recovered, false otherwise.
 // This should be called with defer.
+// Note: This method calls recover() directly to work properly with Go's defer mechanism.
 func (pr *PanicRecovery) Recover(op string) bool {
-	return pr.RecoverWithOperation(op)
+	r := recover()
+	if r == nil {
+		return false
+	}
+	pr.HandleRecovery(op, r)
+	return true
+}
+
+// HandleRecovery handles a panic that has already been recovered.
+// This is used when recover() is called directly in the deferred function.
+func (pr *PanicRecovery) HandleRecovery(op string, r interface{}) {
+	pr.mu.Lock()
+	if !pr.enabled {
+		pr.mu.Unlock()
+		return
+	}
+
+	// Check if we've exceeded max recoveries
+	if pr.maxRecoveries >= 0 && pr.recoveryCount >= pr.maxRecoveries {
+		pr.mu.Unlock()
+		// Re-panic if we've exceeded the limit
+		panic(fmt.Sprintf("max panic recoveries (%d) exceeded in %s", pr.maxRecoveries, op))
+	}
+	pr.recoveryCount++
+	count := pr.recoveryCount
+	pr.mu.Unlock()
+
+	stack := debug.Stack()
+
+	// Log by default if enabled
+	if pr.logByDefault {
+		err := PanicError(op, r)
+		LogErrorWithLevel(err)
+	}
+
+	// Call custom handler if set
+	if pr.handler != nil {
+		pr.handler(r, stack)
+	}
+
+	// Log recovery count if it's getting high
+	if count > 10 {
+		Warn(op, "high panic recovery count: %d", count)
+	}
 }
 
 // RecoverWithOperation catches a panic and handles it with operation context.
@@ -135,7 +179,11 @@ func defaultRecoveryHandler(panicValue interface{}, stackTrace []byte) {
 // Go runs a function in a goroutine with panic recovery.
 func (pr *PanicRecovery) Go(op string, fn func()) {
 	go func() {
-		defer pr.Recover(op)
+		defer func() {
+			if r := recover(); r != nil {
+				pr.HandleRecovery(op, r)
+			}
+		}()
 		fn()
 	}()
 }
@@ -160,8 +208,11 @@ func DisablePanicRecovery() {
 
 // RecoverPanic catches a panic using the global recovery manager.
 // This is the main function that should be used with defer.
+// Note: recover() must be called directly in the deferred function, not in a nested call.
 func RecoverPanic(op string) {
-	globalRecovery.Recover(op)
+	if r := recover(); r != nil {
+		globalRecovery.HandleRecovery(op, r)
+	}
 }
 
 // RecoverPanicAndReturn catches a panic and returns an error.
