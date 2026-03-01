@@ -3,6 +3,7 @@ package sections
 import (
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/ll931217/claude-hud-enhanced/internal/config"
 	"github.com/ll931217/claude-hud-enhanced/internal/registry"
@@ -41,6 +42,7 @@ func (s *ZaiUsageSection) Render() string {
 	}
 
 	var parts []string
+	showResetTimes := s.GetConfig().ShowZaiResetTimes()
 
 	// Session usage (5-hour rolling window)
 	if info.SessionPercent > 0 {
@@ -48,6 +50,9 @@ func (s *ZaiUsageSection) Render() string {
 		color := s.getUsageColor(info.SessionPercent)
 		if color != "" {
 			sessionDisplay = fmt.Sprintf("%s%s%s", color, sessionDisplay, theme.Reset)
+		}
+		if showResetTimes && !info.SessionReset.IsZero() {
+			sessionDisplay += fmt.Sprintf(" %s(reset: %s)%s", theme.Dim, formatResetTime(info.SessionReset), theme.Reset)
 		}
 		parts = append(parts, "🔋 "+sessionDisplay)
 	}
@@ -58,6 +63,9 @@ func (s *ZaiUsageSection) Render() string {
 		color := s.getUsageColor(info.WeeklyPercent)
 		if color != "" {
 			weeklyDisplay = fmt.Sprintf("%s%s%s", color, weeklyDisplay, theme.Reset)
+		}
+		if showResetTimes && !info.WeeklyReset.IsZero() {
+			weeklyDisplay += fmt.Sprintf(" %s(reset: %s)%s", theme.Dim, formatResetTime(info.WeeklyReset), theme.Reset)
 		}
 		parts = append(parts, "📊 "+weeklyDisplay)
 	}
@@ -88,6 +96,27 @@ func (s *ZaiUsageSection) getUsageColor(percent int) string {
 		return theme.Yellow // Yellow for warning
 	default:
 		return "" // Default terminal color (green implied by low usage)
+	}
+}
+
+// formatResetTime formats a reset time for display
+func formatResetTime(t time.Time) string {
+	now := time.Now()
+	duration := t.Sub(now)
+
+	if duration < 0 {
+		return "soon"
+	}
+
+	// Format as relative time
+	if duration < time.Minute {
+		return "<1m"
+	} else if duration < time.Hour {
+		return fmt.Sprintf("%dm", int(duration.Minutes()))
+	} else if duration < 24*time.Hour {
+		return fmt.Sprintf("%dh %dm", int(duration.Hours()), int(duration.Minutes())%60)
+	} else {
+		return fmt.Sprintf("%dd %dh", int(duration.Hours())/24, int(duration.Hours())%24)
 	}
 }
 

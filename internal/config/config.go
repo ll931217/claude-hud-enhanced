@@ -12,12 +12,23 @@ import (
 
 // Config represents the application configuration
 type Config struct {
-	Colors            ColorsConfig `yaml:"colors"`
-	Layout            LayoutConfig `yaml:"layout"`
-	RefreshIntervalMs int          `yaml:"refresh_interval_ms"`
-	Debug             bool         `yaml:"debug"`
-	CompactMode       bool         `yaml:"compact_mode"`
-	MaxLines          int          `yaml:"max_lines"`
+	Colors            ColorsConfig            `yaml:"colors"`
+	Layout            LayoutConfig            `yaml:"layout"`
+	Sections          SectionsConfig          `yaml:"sections"`
+	RefreshIntervalMs int                     `yaml:"refresh_interval_ms"`
+	Debug             bool                    `yaml:"debug"`
+	CompactMode       bool                    `yaml:"compact_mode"`
+	MaxLines          int                     `yaml:"max_lines"`
+}
+
+// SectionsConfig holds section-specific configuration options
+type SectionsConfig struct {
+	ZaiUsage ZaiUsageConfig `yaml:"zaiusage"`
+}
+
+// ZaiUsageConfig holds configuration for the zaiusage section
+type ZaiUsageConfig struct {
+	ShowResetTimes bool `yaml:"show_reset_times"` // Show when quotas reset
 }
 
 // ColorsConfig holds color customization options
@@ -240,6 +251,11 @@ func (c *Config) IsSectionEnabled(sectionName string) bool {
 // GetRefreshInterval returns the refresh interval as a time.Duration
 func (c *Config) GetRefreshInterval() time.Duration {
 	return time.Duration(c.RefreshIntervalMs) * time.Millisecond
+}
+
+// ShowZaiResetTimes returns whether to show reset times in the zaiusage section
+func (c *Config) ShowZaiResetTimes() bool {
+	return c.Sections.ZaiUsage.ShowResetTimes
 }
 
 // Save writes the current configuration to the default config path
