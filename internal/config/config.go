@@ -208,7 +208,7 @@ func (c *Config) GetEnabledSections() []string {
 	}
 
 	// Fallback: return all enabled sections in default order
-	defaultOrder := []string{"model", "contextbar", "duration", "beads", "status", "workspace", "claudestats", "tools", "sysinfo"}
+	defaultOrder := []string{"model", "contextbar", "duration", "zaiusage", "beads", "status", "workspace", "claudestats", "tools", "sysinfo"}
 	var result []string
 	for _, name := range defaultOrder {
 		if c.IsSectionEnabled(name) {
@@ -284,7 +284,7 @@ func DefaultLayout() LayoutConfig {
 	return LayoutConfig{
 		Lines: []LineConfig{
 			{
-				Sections:  []string{"model", "contextbar", "duration", "beads"},
+				Sections:  []string{"model", "contextbar", "duration", "zaiusage", "beads"},
 				Separator: " | ",
 			},
 			{

@@ -31,7 +31,7 @@ func TestDefaultConfig(t *testing.T) {
 
 	// Check layout has expected sections in first line
 	firstLine := config.Layout.Lines[0]
-	expectedFirstLineSections := []string{"model", "contextbar", "duration", "beads"}
+	expectedFirstLineSections := []string{"model", "contextbar", "duration", "zaiusage", "beads"}
 	if len(firstLine.Sections) != len(expectedFirstLineSections) {
 		t.Errorf("Expected first line to have %d sections, got %d", len(expectedFirstLineSections), len(firstLine.Sections))
 	}
@@ -259,7 +259,7 @@ func TestGetEnabledSections_FromLayout(t *testing.T) {
 	enabled := config.GetEnabledSections()
 
 	// Check that we get all expected sections from default layout
-	expectedCount := 9 // model, contextbar, duration, beads, status, workspace, claudestats, tools, sysinfo
+	expectedCount := 10 // model, contextbar, duration, zaiusage, beads, status, workspace, claudestats, tools, sysinfo
 	if len(enabled) != expectedCount {
 		t.Fatalf("Expected %d enabled sections from default layout, got %d", expectedCount, len(enabled))
 	}
@@ -270,7 +270,7 @@ func TestGetEnabledSections_FromLayout(t *testing.T) {
 		sectionMap[s] = true
 	}
 
-	expectedSections := []string{"model", "contextbar", "duration", "beads", "status", "workspace", "claudestats", "tools", "sysinfo"}
+	expectedSections := []string{"model", "contextbar", "duration", "zaiusage", "beads", "status", "workspace", "claudestats", "tools", "sysinfo"}
 	for _, s := range expectedSections {
 		if !sectionMap[s] {
 			t.Errorf("Expected section '%s' to be in enabled list", s)
@@ -307,8 +307,8 @@ func TestGetEnabledSections_EmptyLayout(t *testing.T) {
 	enabled := config.GetEnabledSections()
 
 	// All sections should be enabled when layout is empty
-	if len(enabled) != 9 {
-		t.Fatalf("Expected 9 enabled sections with empty layout, got %d", len(enabled))
+	if len(enabled) != 10 {
+		t.Fatalf("Expected 10 enabled sections with empty layout, got %d", len(enabled))
 	}
 }
 
@@ -326,6 +326,7 @@ func TestIsSectionEnabled(t *testing.T) {
 		{"workspace", true},
 		{"tools", true},
 		{"sysinfo", true},
+		{"zaiusage", true},
 		{"nonexistent", false},
 	}
 
