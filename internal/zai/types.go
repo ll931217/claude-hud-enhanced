@@ -5,7 +5,7 @@ import "time"
 
 // APIResponse represents the top-level response from the Z.ai API
 type APIResponse struct {
-	Success bool     `json:"success"`
+	Success bool      `json:"success"`
 	Data    UsageData `json:"data"`
 }
 
@@ -17,11 +17,11 @@ type UsageData struct {
 
 // Limit represents a single usage limit/quota
 type Limit struct {
-	Type          string `json:"type"`           // "TOKENS_LIMIT" or "TIME_LIMIT"
-	Unit          int    `json:"unit"`           // Limit unit identifier
-	Number        int    `json:"number"`         // Limit number (e.g., 5 for 5-hour window)
-	Percentage    int    `json:"percentage"`     // Usage percentage (0-100)
-	NextResetTime int64  `json:"nextResetTime"`  // Unix timestamp in milliseconds
+	Type          string `json:"type"`          // "TOKENS_LIMIT" or "TIME_LIMIT"
+	Unit          int    `json:"unit"`          // Limit unit identifier
+	Number        int    `json:"number"`        // Limit number (e.g., 5 for 5-hour window)
+	Percentage    int    `json:"percentage"`    // Usage percentage (0-100)
+	NextResetTime int64  `json:"nextResetTime"` // Unix timestamp in milliseconds
 }
 
 // UsageInfo contains the parsed usage information for display
@@ -46,7 +46,7 @@ const (
 	LimitTypeTime   = "TIME_LIMIT"
 
 	// Unit identifiers based on API response
-	UnitSession = 3  // 5-hour rolling window (with number=5)
-	UnitWeekly  = 6  // Weekly aggregate
-	UnitSearch  = 5  // Monthly search (with number=1)
+	UnitSession = 3 // 5-hour rolling window (with number=5)
+	UnitWeekly  = 6 // Weekly aggregate
+	UnitSearch  = 5 // Monthly search (with number=1)
 )

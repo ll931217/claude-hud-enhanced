@@ -195,9 +195,9 @@ func TestFetch_APIError(t *testing.T) {
 
 func TestParseUsageData(t *testing.T) {
 	tests := []struct {
-		name           string
-		data           *UsageData
-		expectedInfo   *UsageInfo
+		name         string
+		data         *UsageData
+		expectedInfo *UsageInfo
 	}{
 		{
 			name: "all limits present",

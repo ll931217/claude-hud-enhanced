@@ -10,9 +10,9 @@ import (
 )
 
 const (
-	apiURL        = "https://api.z.ai/api/monitor/usage/quota/limit"
-	timeout       = 10 * time.Second
-	cacheTTL      = 60 * time.Second
+	apiURL   = "https://api.z.ai/api/monitor/usage/quota/limit"
+	timeout  = 10 * time.Second
+	cacheTTL = 60 * time.Second
 )
 
 // Client handles fetching usage data from the Z.ai API
