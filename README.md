@@ -13,6 +13,7 @@ A sophisticated statusline plugin for Claude Code sessions, providing real-time 
 - **Claude Code Integration**: Deep integration with Claude Code session transcripts
 - **Context Progress Bar**: Visual progress bar with color-coded thresholds (yellow/red at high usage)
 - **Token Breakdown**: Shows detailed token usage at high context (≥85%)
+- **Z.ai Usage Monitor**: Track your Z.ai coding plan quotas (session, weekly, search)
 - **Responsive Layout**: Adapts to terminal size with priority-based progressive disclosure
 - **Configurable Layout**: Each line is fully customizable with sections and separators
 - **Tool Usage Tracking**: Display recently used tools with recency sorting
@@ -32,6 +33,7 @@ A sophisticated statusline plugin for Claude Code sessions, providing real-time 
 
 Additional sections are available (not enabled by default) for enhanced functionality:
 
+- **Z.ai Usage**: Monitor Z.ai coding plan quotas with reset times
 - **Agent Activity**: Show running and completed Claude Code subagents
 - **Cost Tracker**: Display accumulated API costs with hourly rate
 - **Todo Progress**: Track TodoWrite-based task lists
@@ -330,6 +332,39 @@ Example:
 ```
 💻 15% | 🎯 8.2/32GB | 💾 45GB
 ```
+
+### Z.ai Usage Section
+
+Monitor your Z.ai coding plan quotas:
+- **Session**: 5-hour rolling window token usage
+- **Weekly**: Weekly aggregate token usage (5 sessions)
+- **Search**: Monthly web search quota
+
+Example:
+```
+🔋 72% | 📊 45% | 🔍 30%
+```
+
+With reset times enabled:
+```
+🔋 72% (reset: 2h 30m) | 📊 45% (reset: 3d 12h) | 🔍 30%
+```
+
+**Configuration:**
+```yaml
+sections:
+  zaiusage:
+    show_reset_times: true  # Show when quotas reset
+```
+
+**Environment Variables:**
+- `GLM_API_KEY` - Your Z.ai API key (preferred)
+- `ZAI_API_KEY` - Alternative API key variable
+
+**Color coding:**
+- Default: <70% usage
+- Yellow: 70-90% usage
+- Red: >90% usage
 
 ## Development
 

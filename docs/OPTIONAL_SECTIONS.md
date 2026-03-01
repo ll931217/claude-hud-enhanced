@@ -4,6 +4,7 @@ This document describes additional sections available in Claude HUD Enhanced tha
 
 ## Table of Contents
 
+- [Z.ai Usage Monitor](#zai-usage-monitor)
 - [Agent Activity](#agent-activity)
 - [Cost Tracker](#cost-tracker)
 - [Todo Progress](#todo-progress)
@@ -11,6 +12,82 @@ This document describes additional sections available in Claude HUD Enhanced tha
 - [Test Coverage](#test-coverage)
 - [Build Status](#build-status)
 - [How to Enable Sections](#how-to-enable-sections)
+
+---
+
+## Z.ai Usage Monitor
+
+**Section ID:** `zaiusage`
+**Priority:** Important
+**Minimum Width:** 20 columns
+
+Displays your Z.ai coding plan usage quotas with color-coded warnings.
+
+### What it shows:
+
+- **🔋 Session**: 5-hour rolling window token usage
+- **📊 Weekly**: Weekly aggregate token usage (5 sessions)
+- **🔍 Search**: Monthly web search quota
+- **Reset times** (optional): When quotas reset
+
+### Example output:
+
+```
+🔋 72% | 📊 45% | 🔍 30%
+```
+
+With reset times enabled:
+```
+🔋 72% (reset: 2h 30m) | 📊 45% (reset: 3d 12h) | 🔍 30%
+```
+
+### Configuration:
+
+```yaml
+# Add to layout
+layout:
+  lines:
+    - sections: [zaiusage]
+      separator: " | "
+
+# Optional: Show reset times
+sections:
+  zaiusage:
+    show_reset_times: true  # Show when quotas reset
+```
+
+### Environment Variables:
+
+Set one of these environment variables for API access:
+- `GLM_API_KEY` - Your Z.ai API key (preferred)
+- `ZAI_API_KEY` - Alternative API key variable
+
+```bash
+export GLM_API_KEY=your-api-key
+```
+
+### Color coding:
+
+| Color | Usage | Meaning |
+|-------|-------|---------|
+| Default | <70% | Normal usage |
+| Yellow | 70-90% | Approaching limit |
+| Red | >90% | Critical - near limit |
+
+### Features:
+
+- **60-second cache**: API responses are cached to avoid rate limiting
+- **Graceful degradation**: Section hides if API key is not set
+- **Thread-safe**: Safe for concurrent access
+- **Automatic retry**: Handles transient network errors
+
+### Reset time format:
+
+Reset times are displayed as relative durations:
+- `<1m` - Less than a minute
+- `5m` - Minutes
+- `2h 30m` - Hours and minutes
+- `3d 12h` - Days and hours
 
 ---
 

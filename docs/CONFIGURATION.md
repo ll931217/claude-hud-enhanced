@@ -185,6 +185,26 @@ sections:
 
 #### Available Sections
 
+##### Z.ai Usage Section
+
+Displays Z.ai coding plan usage quotas.
+
+```yaml
+sections:
+  zaiusage:
+    show_reset_times: true  # Show when quotas reset
+```
+
+**Shows:**
+- Session usage (5-hour rolling window): 🔋 72%
+- Weekly usage (5 sessions): 📊 45%
+- Search usage (monthly): 🔍 30%
+- Optional reset times when enabled
+
+**Environment Variables:**
+- `GLM_API_KEY` - Z.ai API key (preferred)
+- `ZAI_API_KEY` - Alternative API key
+
 ##### Session Section
 
 Displays Claude Code session information.

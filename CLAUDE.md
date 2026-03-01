@@ -193,6 +193,14 @@ type Section interface {
 - Integrates with `internal/system/` for system monitoring
 - Priority: Optional (hidden first on small terminals)
 
+**ZaiUsage Section** (`internal/sections/zaiusage.go`):
+- Z.ai coding plan usage quotas (session, weekly, search)
+- Color-coded usage warnings (green/yellow/red)
+- Optional reset times display
+- Reads API key from `GLM_API_KEY` or `ZAI_API_KEY` environment variable
+- 60-second cache TTL for API responses
+- Priority: Important (show on medium+ terminals)
+
 ### Error Handling Architecture
 
 The `internal/errors/` package provides comprehensive error handling:
@@ -226,6 +234,8 @@ layout:
   lines:
     - sections: [model, contextbar, duration]
       separator: " | "
+    - sections: [zaiusage]
+      separator: " | "
     - sections: [workspace, status, beads]
       separator: " | "
     - sections: [tools, sysinfo]
@@ -242,6 +252,8 @@ sections:
   duration:
     enabled: true
     order: 3
+  zaiusage:
+    show_reset_times: true  # Show when quotas reset
   beads:
     enabled: true
     order: 4
@@ -303,6 +315,7 @@ The binary automatically detects when running in Claude Code statusline mode:
 **Large terminal (120+ cols) - Full layout:**
 ```
 glm-4.7 2h15m | █████████░ 92% (in: 185k, cache: 12k) | ◐ Implement feature X | $0.45
+🔋 72% (reset: 2h 30m) | 📊 45% (reset: 3d 12h) | 🔍 30%
 🐹 Go | ~/claude-hud-enhanced | 🌿 main ±3 ⬆2
 Read×12 | Edit×8 | Bash×5 | Grep×3 | Ask×2
 💻 15% | 🎯 8.2/32GB | 💾 45GB
@@ -311,6 +324,7 @@ Read×12 | Edit×8 | Bash×5 | Grep×3 | Ask×2
 **Medium terminal (80-119 cols):**
 ```
 glm-4.7 2h15m | █████████░ 92% | ◐ Implement feature X
+🔋 72% | 📊 45% | 🔍 30%
 🐹 Go | ~/claude-hud-enhanced | 🌿 main ±3 ⬆2
 💻 15% | 🎯 8.2/32GB | 💾 45GB
 ```
