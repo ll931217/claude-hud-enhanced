@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"os"
 	"path/filepath"
+	"strings"
 	"sync"
 	"time"
 
@@ -14,37 +15,45 @@ import (
 
 // coreTools is the set of built-in Claude Code tools
 var coreTools = map[string]bool{
-	"read":            true,
-	"edit":            true,
-	"write":           true,
-	"bash":            true,
-	"grep":            true,
-	"glob":            true,
-	"askuserquestion": true,
-	"todowrite":       true,
-	"taskupdate":      true,
-	"taskget":         true,
-	"tasklist":        true,
-	"taskoutput":      true,
-	"skill":           true,
-	"websearch":       true,
-	"webfetch":        true,
-	"mcp__search":     true,
-	"notebookedit":    true,
-	"killshell":       true,
-	"exitplanmode":    true,
-	"enterplanmode":   true,
-	"readfile":        true,
-	"repository":      true,
+	"read":                 true,
+	"edit":                 true,
+	"write":                true,
+	"bash":                 true,
+	"grep":                 true,
+	"glob":                 true,
+	"agent":                true,
+	"askuserquestion":      true,
+	"todowrite":            true,
+	"taskupdate":           true,
+	"taskget":              true,
+	"tasklist":             true,
+	"taskoutput":           true,
+	"taskcreate":           true,
+	"taskstop":             true,
+	"skill":                true,
+	"websearch":            true,
+	"webfetch":             true,
+	"notebookedit":         true,
+	"killshell":            true,
+	"exitplanmode":         true,
+	"enterplanmode":        true,
+	"enterworktree":        true,
+	"sendmessage":          true,
+	"lsp":                  true,
+	"toolsearch":           true,
+	"listmcpresourcestool": true,
+	"readmcpresourcetool":  true,
+	"teamcreate":           true,
+	"teamdelete":           true,
 }
 
 // StatsCache holds cached statistics
 type StatsCache struct {
-	CoreCount   int
-	MCPCount    int
-	SkillsCount int
-	HooksCount  int
-	Timestamp   time.Time
+	CoreCount    int
+	MCPCount     int
+	PluginsCount int
+	HooksCount   int
+	Timestamp    time.Time
 }
 
 // Collector gathers Claude capability statistics
@@ -52,6 +61,7 @@ type Collector struct {
 	mu           sync.RWMutex
 	mcpClient    *mcp.Client
 	settingsPath string
+	pluginsDir   string
 	cache        *StatsCache
 	lastUpdate   time.Time
 	cacheTTL     time.Duration
@@ -71,6 +81,7 @@ func NewCollector() *Collector {
 	return &Collector{
 		mcpClient:    mcp.NewClient(),
 		settingsPath: filepath.Join(homeDir, ".claude", "settings.json"),
+		pluginsDir:   filepath.Join(homeDir, ".claude", "plugins"),
 		cacheTTL:     5 * time.Second,
 	}
 }
@@ -87,11 +98,11 @@ func (c *Collector) Collect(ctx context.Context) *StatsCache {
 
 	// Collect fresh data
 	stats := &StatsCache{
-		CoreCount:   len(coreTools),
-		MCPCount:    c.collectMCPCount(ctx),
-		SkillsCount: c.collectSkillsCount(ctx),
-		HooksCount:  c.collectHooksCount(ctx),
-		Timestamp:   time.Now(),
+		CoreCount:    len(coreTools),
+		MCPCount:     c.collectMCPCount(ctx),
+		PluginsCount: c.collectPluginsCount(ctx),
+		HooksCount:   c.collectHooksCount(ctx),
+		Timestamp:    time.Now(),
 	}
 
 	c.cache = stats
@@ -111,8 +122,8 @@ func (c *Collector) collectMCPCount(ctx context.Context) int {
 	return c.mcpClient.ServerCount()
 }
 
-// collectSkillsCount returns enabled skills count
-func (c *Collector) collectSkillsCount(ctx context.Context) int {
+// collectPluginsCount returns enabled plugins count
+func (c *Collector) collectPluginsCount(ctx context.Context) int {
 	data, err := os.ReadFile(c.settingsPath)
 	if err != nil {
 		errors.Debug("claudestats", "failed to read settings file: %v", err)
@@ -131,8 +142,15 @@ func (c *Collector) collectSkillsCount(ctx context.Context) int {
 	return len(settings.EnabledPlugins)
 }
 
-// collectHooksCount returns configured hooks count
+// collectHooksCount returns configured hooks count (settings + plugin hooks)
 func (c *Collector) collectHooksCount(ctx context.Context) int {
+	count := c.collectSettingsHooksCount()
+	count += c.collectPluginHooksCount()
+	return count
+}
+
+// collectSettingsHooksCount counts hooks from ~/.claude/settings.json
+func (c *Collector) collectSettingsHooksCount() int {
 	data, err := os.ReadFile(c.settingsPath)
 	if err != nil {
 		errors.Debug("claudestats", "failed to read settings file for hooks: %v", err)
@@ -154,6 +172,123 @@ func (c *Collector) collectHooksCount(ctx context.Context) int {
 	count := 0
 	for _, hookGroup := range settings.Hooks {
 		for _, group := range hookGroup {
+			count += len(group.Hooks)
+		}
+	}
+	return count
+}
+
+// collectPluginHooksCount counts hooks from installed plugin.json files
+func (c *Collector) collectPluginHooksCount() int {
+	if c.pluginsDir == "" {
+		return 0
+	}
+
+	installedPath := filepath.Join(c.pluginsDir, "installed_plugins.json")
+	data, err := os.ReadFile(installedPath)
+	if err != nil {
+		errors.Debug("claudestats", "failed to read installed_plugins.json: %v", err)
+		return 0
+	}
+
+	var installed struct {
+		Plugins map[string][]struct {
+			InstallPath string `json:"installPath"`
+		} `json:"plugins"`
+	}
+
+	if err := json.Unmarshal(data, &installed); err != nil {
+		errors.Debug("claudestats", "failed to parse installed_plugins.json: %v", err)
+		return 0
+	}
+
+	count := 0
+	seen := make(map[string]bool)
+	for _, installs := range installed.Plugins {
+		for _, inst := range installs {
+			if inst.InstallPath == "" || seen[inst.InstallPath] {
+				continue
+			}
+			seen[inst.InstallPath] = true
+			count += c.countPluginHooks(inst.InstallPath)
+		}
+	}
+	return count
+}
+
+// countPluginHooks counts hooks in a single plugin directory
+func (c *Collector) countPluginHooks(installPath string) int {
+	pluginJSONPath := filepath.Join(installPath, ".claude-plugin", "plugin.json")
+	if _, err := os.Stat(pluginJSONPath); os.IsNotExist(err) {
+		// Try without .claude-plugin subdirectory
+		pluginJSONPath = filepath.Join(installPath, "plugin.json")
+		if _, err := os.Stat(pluginJSONPath); os.IsNotExist(err) {
+			return 0
+		}
+	}
+
+	data, err := os.ReadFile(pluginJSONPath)
+	if err != nil {
+		return 0
+	}
+
+	var plugin struct {
+		Hooks json.RawMessage `json:"hooks"`
+	}
+
+	if err := json.Unmarshal(data, &plugin); err != nil || plugin.Hooks == nil {
+		return 0
+	}
+
+	// Try parsing as inline hooks map: {"SessionStart": [...], "PreToolUse": [...]}
+	var inlineHooks map[string][]struct {
+		Hooks []json.RawMessage `json:"hooks"`
+	}
+	if err := json.Unmarshal(plugin.Hooks, &inlineHooks); err == nil {
+		count := 0
+		for _, groups := range inlineHooks {
+			for _, group := range groups {
+				count += len(group.Hooks)
+			}
+		}
+		return count
+	}
+
+	// Try parsing as file reference string: "./hooks/hooks.json"
+	var hooksFile string
+	if err := json.Unmarshal(plugin.Hooks, &hooksFile); err == nil {
+		if !filepath.IsAbs(hooksFile) {
+			hooksFile = filepath.Join(filepath.Dir(pluginJSONPath), hooksFile)
+		}
+		return c.countHooksFromFile(hooksFile)
+	}
+
+	return 0
+}
+
+// countHooksFromFile counts hooks from an external hooks JSON file
+func (c *Collector) countHooksFromFile(path string) int {
+	// Prevent directory traversal
+	if strings.Contains(path, "..") {
+		return 0
+	}
+
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return 0
+	}
+
+	var hooks map[string][]struct {
+		Hooks []json.RawMessage `json:"hooks"`
+	}
+
+	if err := json.Unmarshal(data, &hooks); err != nil {
+		return 0
+	}
+
+	count := 0
+	for _, groups := range hooks {
+		for _, group := range groups {
 			count += len(group.Hooks)
 		}
 	}

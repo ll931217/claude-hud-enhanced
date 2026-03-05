@@ -50,8 +50,8 @@ func (s *ClaudeStatsSection) Render() string {
 	if stats.MCPCount > 0 {
 		parts = append(parts, fmt.Sprintf("MCP:%d", stats.MCPCount))
 	}
-	if stats.SkillsCount > 0 {
-		parts = append(parts, fmt.Sprintf("Skills:%d", stats.SkillsCount))
+	if stats.PluginsCount > 0 {
+		parts = append(parts, fmt.Sprintf("Plugins:%d", stats.PluginsCount))
 	}
 	if stats.HooksCount > 0 {
 		parts = append(parts, fmt.Sprintf("Hooks:%d", stats.HooksCount))

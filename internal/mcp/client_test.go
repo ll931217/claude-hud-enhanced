@@ -35,7 +35,7 @@ func TestClient_DetectServers_NoConfig(t *testing.T) {
 
 func TestClient_DetectServers_InvalidConfig(t *testing.T) {
 	tmpDir := t.TempDir()
-	configPath := filepath.Join(tmpDir, "settings.json")
+	configPath := filepath.Join(tmpDir, ".claude.json")
 
 	// Write invalid JSON
 	if err := os.WriteFile(configPath, []byte("invalid json"), 0644); err != nil {
@@ -52,9 +52,44 @@ func TestClient_DetectServers_InvalidConfig(t *testing.T) {
 	}
 }
 
+func TestClient_DetectServers_WithPluginMCP(t *testing.T) {
+	tmpDir := t.TempDir()
+	configPath := filepath.Join(tmpDir, ".claude.json")
+	pluginsDir := filepath.Join(tmpDir, "plugins")
+
+	// Write global config with one MCP server
+	globalJSON := `{"mcpServers": {"global-server": {"command": "node", "args": ["global.js"]}}}`
+	if err := os.WriteFile(configPath, []byte(globalJSON), 0644); err != nil {
+		t.Fatal(err)
+	}
+
+	// Create plugin with .mcp.json
+	pluginPath := filepath.Join(pluginsDir, "cache", "test", "plugin1", "1.0.0")
+	os.MkdirAll(pluginPath, 0755)
+	pluginMCP := `{"mcpServers": {"plugin-server": {"command": "python", "args": ["plugin.py"]}}}`
+	os.WriteFile(filepath.Join(pluginPath, ".mcp.json"), []byte(pluginMCP), 0644)
+
+	// Create installed_plugins.json
+	installed := `{"version": 2, "plugins": {"plugin1@test": [{"installPath": "` + pluginPath + `"}]}}`
+	os.WriteFile(filepath.Join(pluginsDir, "installed_plugins.json"), []byte(installed), 0644)
+
+	client := NewClient()
+	client.configPath = configPath
+	client.pluginsDir = pluginsDir
+
+	ctx := context.Background()
+	if err := client.DetectServers(ctx); err != nil {
+		t.Fatalf("DetectServers() error = %v", err)
+	}
+
+	if client.ServerCount() != 2 {
+		t.Errorf("Expected 2 servers (global + plugin), got %d", client.ServerCount())
+	}
+}
+
 func TestClient_DetectServers_ValidConfig(t *testing.T) {
 	tmpDir := t.TempDir()
-	configPath := filepath.Join(tmpDir, "settings.json")
+	configPath := filepath.Join(tmpDir, ".claude.json")
 
 	// Write valid config with MCP servers
 	configJSON := `{
@@ -233,7 +268,7 @@ func TestClient_QueryServer(t *testing.T) {
 
 	// Query existing server (after adding one)
 	tmpDir := t.TempDir()
-	configPath := filepath.Join(tmpDir, "settings.json")
+	configPath := filepath.Join(tmpDir, ".claude.json")
 
 	configJSON := `{
 		"mcpServers": {
@@ -269,7 +304,7 @@ func TestClient_QueryServer(t *testing.T) {
 
 func TestMCPServer_Disabled(t *testing.T) {
 	tmpDir := t.TempDir()
-	configPath := filepath.Join(tmpDir, "settings.json")
+	configPath := filepath.Join(tmpDir, ".claude.json")
 
 	configJSON := `{
 		"mcpServers": {
@@ -350,7 +385,7 @@ func TestMCPData_Timestamp(t *testing.T) {
 	client := NewClient()
 
 	tmpDir := t.TempDir()
-	configPath := filepath.Join(tmpDir, "settings.json")
+	configPath := filepath.Join(tmpDir, ".claude.json")
 
 	configJSON := `{
 		"mcpServers": {

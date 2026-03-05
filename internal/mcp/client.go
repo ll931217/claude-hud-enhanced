@@ -13,11 +13,11 @@ import (
 )
 
 const (
-	// ClaudeCodeConfigDir is the default Claude Code config directory
-	ClaudeCodeConfigDir = ".config/claude-code"
+	// ClaudeConfigFile is the Claude global config file (~/.claude.json)
+	ClaudeConfigFile = ".claude.json"
 
-	// ClaudeCodeSettingsFile is the settings file name
-	ClaudeCodeSettingsFile = "settings.json"
+	// ClaudePluginsDir is the plugins directory under ~/.claude
+	ClaudePluginsDir = ".claude/plugins"
 
 	// DefaultTimeout is the default timeout for MCP queries
 	DefaultTimeout = 2 * time.Second
@@ -45,6 +45,7 @@ type MCPData struct {
 type Client struct {
 	mu            sync.RWMutex
 	configPath    string
+	pluginsDir    string
 	servers       map[string]*MCPServer
 	enabled       bool
 	timeout       time.Duration
@@ -64,10 +65,9 @@ func NewClient() *Client {
 		}
 	}
 
-	configPath := filepath.Join(homeDir, ClaudeCodeConfigDir, ClaudeCodeSettingsFile)
-
 	return &Client{
-		configPath: configPath,
+		configPath: filepath.Join(homeDir, ClaudeConfigFile),
+		pluginsDir: filepath.Join(homeDir, ClaudePluginsDir),
 		servers:    make(map[string]*MCPServer),
 		enabled:    true,
 		timeout:    DefaultTimeout,
@@ -76,7 +76,7 @@ func NewClient() *Client {
 	}
 }
 
-// DetectServers detects MCP servers from Claude Code configuration
+// DetectServers detects MCP servers from Claude config and plugins
 func (c *Client) DetectServers(ctx context.Context) error {
 	c.mu.Lock()
 	defer c.mu.Unlock()
@@ -85,32 +85,40 @@ func (c *Client) DetectServers(ctx context.Context) error {
 		return fmt.Errorf("MCP client is disabled")
 	}
 
-	// Check if config file exists
+	c.servers = make(map[string]*MCPServer)
+
+	// Load global MCP servers from ~/.claude.json
+	c.loadGlobalServers()
+
+	// Load plugin MCP servers from installed plugin .mcp.json files
+	c.loadPluginServers()
+
+	errors.Info("mcp", "detected %d MCP servers", len(c.servers))
+	return nil
+}
+
+// loadGlobalServers loads MCP servers from ~/.claude.json
+func (c *Client) loadGlobalServers() {
 	if _, err := os.Stat(c.configPath); os.IsNotExist(err) {
-		errors.Debug("mcp", "Claude Code config not found at %s", c.configPath)
-		c.servers = make(map[string]*MCPServer)
-		return nil
+		errors.Debug("mcp", "Claude config not found at %s", c.configPath)
+		return
 	}
 
-	// Read config file
 	data, err := os.ReadFile(c.configPath)
 	if err != nil {
 		errors.Warn("mcp", "failed to read config file: %v", err)
-		return err
+		return
 	}
 
-	// Parse config
 	var config struct {
 		MCPServers map[string]json.RawMessage `json:"mcpServers"`
 	}
 
 	if err := json.Unmarshal(data, &config); err != nil {
 		errors.Warn("mcp", "failed to parse config file: %v", err)
-		return err
+		return
 	}
 
-	// Parse each server
-	c.servers = make(map[string]*MCPServer)
 	for name, serverData := range config.MCPServers {
 		var server MCPServer
 		if err := json.Unmarshal(serverData, &server); err != nil {
@@ -122,10 +130,73 @@ func (c *Client) DetectServers(ctx context.Context) error {
 			c.servers[name] = &server
 		}
 	}
+}
 
-	errors.Info("mcp", "detected %d MCP servers", len(c.servers))
+// loadPluginServers loads MCP servers from installed plugin .mcp.json files
+func (c *Client) loadPluginServers() {
+	if c.pluginsDir == "" {
+		return
+	}
 
-	return nil
+	installedPath := filepath.Join(c.pluginsDir, "installed_plugins.json")
+	data, err := os.ReadFile(installedPath)
+	if err != nil {
+		errors.Debug("mcp", "failed to read installed_plugins.json: %v", err)
+		return
+	}
+
+	var installed struct {
+		Plugins map[string][]struct {
+			InstallPath string `json:"installPath"`
+		} `json:"plugins"`
+	}
+
+	if err := json.Unmarshal(data, &installed); err != nil {
+		errors.Debug("mcp", "failed to parse installed_plugins.json: %v", err)
+		return
+	}
+
+	seen := make(map[string]bool)
+	for _, installs := range installed.Plugins {
+		for _, inst := range installs {
+			if inst.InstallPath == "" || seen[inst.InstallPath] {
+				continue
+			}
+			seen[inst.InstallPath] = true
+			c.loadMCPFromPlugin(inst.InstallPath)
+		}
+	}
+}
+
+// loadMCPFromPlugin loads MCP servers from a plugin's .mcp.json file
+func (c *Client) loadMCPFromPlugin(installPath string) {
+	mcpPath := filepath.Join(installPath, ".mcp.json")
+	data, err := os.ReadFile(mcpPath)
+	if err != nil {
+		return
+	}
+
+	var mcpConfig struct {
+		MCPServers map[string]json.RawMessage `json:"mcpServers"`
+	}
+
+	if err := json.Unmarshal(data, &mcpConfig); err != nil {
+		return
+	}
+
+	for name, serverData := range mcpConfig.MCPServers {
+		if _, exists := c.servers[name]; exists {
+			continue
+		}
+		var server MCPServer
+		if err := json.Unmarshal(serverData, &server); err != nil {
+			continue
+		}
+		server.Name = name
+		if !server.Disabled {
+			c.servers[name] = &server
+		}
+	}
 }
 
 // GetServers returns the list of detected MCP servers

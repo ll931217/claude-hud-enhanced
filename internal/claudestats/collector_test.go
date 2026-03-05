@@ -66,9 +66,9 @@ func TestCollector_Collect(t *testing.T) {
 		t.Errorf("Expected MCPCount 0, got %d", stats.MCPCount)
 	}
 
-	// Skills count should match enabledPlugins
-	if stats.SkillsCount != 3 {
-		t.Errorf("Expected SkillsCount 3, got %d", stats.SkillsCount)
+	// Plugins count should match enabledPlugins
+	if stats.PluginsCount != 3 {
+		t.Errorf("Expected PluginsCount 3, got %d", stats.PluginsCount)
 	}
 
 	// Hooks count should be 3 (1 from PreToolUse + 2 from SessionStart)
@@ -140,8 +140,8 @@ func TestCollector_MissingSettingsFile(t *testing.T) {
 	if stats.CoreCount == 0 {
 		t.Error("CoreCount should not be 0 even with missing settings")
 	}
-	if stats.SkillsCount != 0 {
-		t.Errorf("Expected SkillsCount 0 with missing settings, got %d", stats.SkillsCount)
+	if stats.PluginsCount != 0 {
+		t.Errorf("Expected PluginsCount 0 with missing settings, got %d", stats.PluginsCount)
 	}
 	if stats.HooksCount != 0 {
 		t.Errorf("Expected HooksCount 0 with missing settings, got %d", stats.HooksCount)
@@ -166,8 +166,8 @@ func TestCollector_InvalidSettingsJSON(t *testing.T) {
 	stats := collector.Collect(ctx)
 
 	// Should return 0 for skills and hooks due to parse error
-	if stats.SkillsCount != 0 {
-		t.Errorf("Expected SkillsCount 0 with invalid JSON, got %d", stats.SkillsCount)
+	if stats.PluginsCount != 0 {
+		t.Errorf("Expected PluginsCount 0 with invalid JSON, got %d", stats.PluginsCount)
 	}
 	if stats.HooksCount != 0 {
 		t.Errorf("Expected HooksCount 0 with invalid JSON, got %d", stats.HooksCount)
@@ -196,11 +196,108 @@ func TestCollector_EmptySettings(t *testing.T) {
 		t.Error("CoreCount should not be 0 even with empty settings")
 	}
 	// Skills and hooks should be 0
-	if stats.SkillsCount != 0 {
-		t.Errorf("Expected SkillsCount 0 with empty settings, got %d", stats.SkillsCount)
+	if stats.PluginsCount != 0 {
+		t.Errorf("Expected PluginsCount 0 with empty settings, got %d", stats.PluginsCount)
 	}
 	if stats.HooksCount != 0 {
 		t.Errorf("Expected HooksCount 0 with empty settings, got %d", stats.HooksCount)
+	}
+}
+
+func TestCollector_PluginHooks(t *testing.T) {
+	tmpDir := t.TempDir()
+	settingsPath := filepath.Join(tmpDir, "settings.json")
+	pluginsDir := filepath.Join(tmpDir, "plugins")
+
+	// Create settings with no hooks
+	settings := map[string]interface{}{
+		"enabledPlugins": map[string]bool{},
+		"hooks":          map[string]interface{}{},
+	}
+	data, _ := json.Marshal(settings)
+	os.WriteFile(settingsPath, data, 0644)
+
+	// Create plugin directory structure
+	pluginInstallPath := filepath.Join(pluginsDir, "cache", "test-marketplace", "test-plugin", "1.0.0")
+	pluginDir := filepath.Join(pluginInstallPath, ".claude-plugin")
+	os.MkdirAll(pluginDir, 0755)
+
+	// Create plugin.json with inline hooks
+	pluginJSON := map[string]interface{}{
+		"name": "test-plugin",
+		"hooks": map[string]interface{}{
+			"SessionStart": []map[string]interface{}{
+				{
+					"matcher": "",
+					"hooks": []map[string]string{
+						{"type": "command", "command": "echo hello"},
+					},
+				},
+			},
+			"PreCompact": []map[string]interface{}{
+				{
+					"matcher": "",
+					"hooks": []map[string]string{
+						{"type": "command", "command": "echo compact"},
+						{"type": "prompt", "prompt": "remember"},
+					},
+				},
+			},
+		},
+	}
+	pluginData, _ := json.Marshal(pluginJSON)
+	os.WriteFile(filepath.Join(pluginDir, "plugin.json"), pluginData, 0644)
+
+	// Create installed_plugins.json
+	installed := map[string]interface{}{
+		"version": 2,
+		"plugins": map[string]interface{}{
+			"test-plugin@test-marketplace": []map[string]interface{}{
+				{"installPath": pluginInstallPath},
+			},
+		},
+	}
+	installedData, _ := json.Marshal(installed)
+	os.WriteFile(filepath.Join(pluginsDir, "installed_plugins.json"), installedData, 0644)
+
+	collector := &Collector{
+		settingsPath: settingsPath,
+		pluginsDir:   pluginsDir,
+		cacheTTL:     5 * time.Second,
+	}
+
+	ctx := context.Background()
+	stats := collector.Collect(ctx)
+
+	// Should have 3 plugin hooks (1 from SessionStart + 2 from PreCompact)
+	if stats.HooksCount != 3 {
+		t.Errorf("Expected HooksCount 3, got %d", stats.HooksCount)
+	}
+}
+
+func TestCollector_MissingPluginsDir(t *testing.T) {
+	tmpDir := t.TempDir()
+	settingsPath := filepath.Join(tmpDir, "settings.json")
+
+	settings := map[string]interface{}{
+		"enabledPlugins": map[string]bool{},
+		"hooks":          map[string]interface{}{},
+	}
+	data, _ := json.Marshal(settings)
+	os.WriteFile(settingsPath, data, 0644)
+
+	collector := &Collector{
+		settingsPath: settingsPath,
+		pluginsDir:   filepath.Join(tmpDir, "nonexistent-plugins"),
+		cacheTTL:     5 * time.Second,
+	}
+
+	ctx := context.Background()
+	stats := collector.Collect(ctx)
+
+	// Should gracefully return 0 hooks
+	if stats.HooksCount != 0 {
+		t.Errorf("Expected HooksCount 0 with missing plugins dir, got %d", stats.HooksCount)
 	}
 }
 
